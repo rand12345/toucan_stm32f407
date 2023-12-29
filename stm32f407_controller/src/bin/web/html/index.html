@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" lang="en" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <link rel="stylesheet" href="https://unpkg.com/mvp.css@1.12/mvp.css"> -->
+    <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.min.css">
+    <link
+        href="data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQEAYAAABPYyMiAAAABmJLR0T///////8JWPfcAAAACXBIWXMAAABIAAAASABGyWs+AAAAF0lEQVRIx2NgGAWjYBSMglEwCkbBSAcACBAAAeaR9cIAAAAASUVORK5CYII="
+        rel="icon" type="image/x-icon" />
+    <title>Toucan Gateway - Home</title>
+</head>
+
+<body class="container">
+    <nav>
+        <h1>Home</h1>
+        <details role="list">
+            <summary aria-haspopup="listbox">Navigation</summary>
+            <ul role="listbox">
+                <li><a href="./">Home</a></li>
+                <li><a href="./settings">Settings</a></li>
+                <li><a href="./cells">Cells</a></li>
+                <li><a href="./restart">Restart</a></li>
+            </ul>
+        </details>
+    </nav>
+    <article>
+        <section>
+            <h2>Snapshot data -
+                <script> document.write(new Date().toLocaleTimeString()); </script>
+        </section>
+        </h2>
+        <section>
+            <div id="data_id"></div>
+        </section>
+    </article>
+    <footer>
+        <hr>
+        <section><a href="mailto:my@email.com">Support</a></section>
+    </footer>
+</body>
+<script>
+    window.addEventListener("load", async () => {
+        console.log("JS load");
+        try {
+            const res = await fetch('/api/bms');
+            const data = await res.json();
+
+            const table = document.createElement("table");
+            const head = document.createElement("thead");
+            const col1 = document.createElement("th");
+            const col2 = document.createElement("th");
+
+            col1.textContent = "BMS Attribute";
+            col2.textContent = "Value";
+
+            head.append(col1, col2);
+            table.appendChild(head);
+
+            for (let key in data) {
+                if (key === "temps") {
+                    continue;
+                }
+                const row = table.insertRow();
+                const cellA = row.insertCell();
+                const cellB = row.insertCell();
+                cellA.textContent = key.replaceAll("_", " ");
+                cellB.textContent = Array.isArray(data[key]) ? data[key].join(", ") : data[key];
+            }
+
+            document.getElementById("data_id").appendChild(table);
+
+        } catch (err) {
+            console.error(err);
+            const error_title = document.createElement("h1");
+            error_title.textContent = "Internal data error";
+            document.getElementById("data_id").appendChild(error_title);
+        }
+    });
+</script>
+
+</html>

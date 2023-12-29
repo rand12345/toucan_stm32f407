@@ -1,0 +1,27 @@
+[target.'cfg(all(target_arch = "arm", target_os = "none"))']
+
+board="STM32F407VETx"
+
+runner = "probe-run --chip STM32F407VETx"
+# runner = "probe-run --chip STM32F407VETx --connect-under-reset"
+rustflags = [
+  "-C", "link-arg=-Tlink.x",
+  "-C", "link-arg=-Tdefmt.x",
+  # This is needed if your flash or ram addresses are not aligned to 0x10000 in memory.x
+  # See https://github.com/rust-embedded/cortex-m-quickstart/pull/95
+  # "-C", "link-arg=--nmagic",
+]
+
+
+[net]
+git-fetch-with-cli = true
+
+[build]
+target = "thumbv7em-none-eabi"    # STM32F407VETx
+
+[alias]
+rb = "run --bin"
+rrb = "run --release --bin"
+
+[env]
+DEFMT_LOG = "debug"

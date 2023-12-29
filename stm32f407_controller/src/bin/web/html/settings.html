@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head class="container-fluid">
+    <meta charset="utf-8" lang="en" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toucan Gateway - Settings</title>
+    <link
+        href="data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQEAYAAABPYyMiAAAABmJLR0T///////8JWPfcAAAACXBIWXMAAABIAAAASABGyWs+AAAAF0lEQVRIx2NgGAWjYBSMglEwCkbBSAcACBAAAeaR9cIAAAAASUVORK5CYII="
+        rel="icon" type="image/x-icon" />
+    <!-- <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.min.css"> -->
+    <style>
+        .disabled {
+            opacity: 0.6;
+            /* You can adjust this value to change the visual appearance of the disabled form */
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body class="container">
+    <nav>
+        <h1>Device Settings</h1>
+        <details role="list">
+            <summary aria-haspopup="listbox">Navigation</summary>
+            <ul role="listbox">
+                <li><a href="./">Home</a></li>
+                <li><a href="./settings">Settings</a></li>
+                <li><a href="./cells">Cells</a></li>
+                <li><a href="./restart">Restart</a></li>
+            </ul>
+        </details>
+    </nav>
+    <article id="resp" class="grid">
+        <form id="networkForm" onsubmit="return validateIpForm()">
+            <h2>Network</h2>
+            <label for="dhcp">Enable DHCP:</label>
+            <button type="button" id="dhcpButton" onclick="toggleDHCP()">Off</button>
+            <!-- <br><br> -->
+            <label for="ipAddress">IP Address:</label>
+            <input type="text" id="ipAddress" required pattern="^([0-9]{1,3}\.){3}[0-9]{1,3}$" value="192.168.1.100">
+            <!-- <br><br> -->
+            <label for="subnet">Subnet:</label>
+            <input type="text" id="subnet" required pattern="^([0-9]{1,3}\.){3}[0-9]{1,3}$" value="255.255.255.0">
+            <!-- <br><br> -->
+            <label for="dns">DNS:</label>
+            <input type="text" id="dns" required pattern="^([0-9]{1,3}\.){3}[0-9]{1,3}$" value="1.1.1.1">
+            <!-- <br><br> -->
+            <label for="gateway">Gateway:</label>
+            <input type="text" id="gateway" required pattern="^([0-9]{1,3}\.){3}[0-9]{1,3}$" value="192.168.1.1">
+            <!-- <br><br> -->
+            <button type="submit">Submit</button>
+        </form>
+        <form onsubmit="return validateMqttForm()">
+            <h2>MQTT</h2>
+
+            <label for="mqttHostname">MQTT Hostname:</label>
+            <input type="text" id="mqttHostname" required value="mqtt.server.com">
+            <!-- <br><br> -->
+            <label for="mqttPort">MQTT Port:</label>
+            <input type="number" id="mqttPort" required value="1883">
+            <!-- <br><br> -->
+
+            <label for="mqttUsername">Username:</label>
+            <input type="text" id="mqttUsername">
+            <!-- <br><br> -->
+
+            <label for="mqttPassword">Password:</label>
+            <input type="password" id="mqttPassword">
+            <!-- <br><br> -->
+
+            <label for="mqttTopic">Topic:</label>
+            <input type="text" id="mqttTopic">
+            <!-- <br><br> -->
+
+            <label for="mqttClientId">Client ID:</label>
+            <input type="text" id="mqttClientId">
+            <!-- <br><br> -->
+            <label for="mqttClientInterval">Message Interval (seconds):</label>
+            <input type="number" min="1" max="600" value="10" id="mqttInterval">
+            <!-- <br><br> -->
+            <button type="submit">Submit</button>
+        </form>
+        <form>
+            <h2>BMS</h2>
+            <label for="minDOD">Minimum Depth of Discharge</label>
+            <input type="range" min="10" max="90" value="20" class="slider" id="minDOD" required>
+            <p id="minDODval"></p>
+            <label for="maxDOD">Maximum Depth of Discharge</label>
+            <input type="range" min="10" max="90" value="50" class="slider" id="maxDOD" required>
+            <p id="maxDODval"></p>
+            <br>
+            <button type="submit">Submit</button>
+    </article>
+    <form onsubmit="return validateConfigForm()">
+        <h2>Update Config</h2>
+
+        <label for="chargeCurrentMin">Charge Current Min:</label>
+        <input type="number" id="chargeCurrentMin" step="any" required>
+
+        <label for="chargeCurrentMax">Charge Current Max:</label>
+        <input type="number" id="chargeCurrentMax" step="any" required>
+        <br><br>
+
+        <label for="dischargeCurrentMin">Discharge Current Min:</label>
+        <input type="number" id="dischargeCurrentMin" step="any" required>
+
+        <label for="dischargeCurrentMax">Discharge Current Max:</label>
+        <input type="number" id="dischargeCurrentMax" step="any" required>
+        <br><br>
+
+        <label for="currentSensorMin">Current Sensor Min:</label>
+        <input type="number" id="currentSensorMin" step="any" required>
+
+        <label for="currentSensorMax">Current Sensor Max:</label>
+        <input type="number" id="currentSensorMax" step="any" required>
+        <br><br>
+
+        <label for="packVoltsMin">Pack Volts Min:</label>
+        <input type="number" id="packVoltsMin" step="any" required>
+
+        <label for="packVoltsMax">Pack Volts Max:</label>
+        <input type="number" id="packVoltsMax" step="any" required>
+        <br><br>
+
+        <label for="cellTemperaturesMin">Cell Temperatures Min:</label>
+        <input type="number" id="cellTemperaturesMin" step="any" required>
+
+        <label for="cellTemperaturesMax">Cell Temperatures Max:</label>
+        <input type="number" id="cellTemperaturesMax" step="any" required>
+        <br><br>
+
+        <label for="packTemperaturesMin">Pack Temperatures Min:</label>
+        <input type="number" id="packTemperaturesMin" step="any" required>
+
+        <label for="packTemperaturesMax">Pack Temperatures Max:</label>
+        <input type="number" id="packTemperaturesMax" step="any" required>
+        <br><br>
+
+        <label for="cellMillivoltPeak">Cell Millivolt Peak:</label>
+        <input type="number" id="cellMillivoltPeak" required>
+        <br><br>
+
+        <label for="cellsMvMin">Cells Millivolt Min:</label>
+        <input type="number" id="cellsMvMin" required>
+
+        <label for="cellsMvMax">Cells Millivolt Max:</label>
+        <input type="number" id="cellsMvMax" required>
+        <br><br>
+
+        <label for="cellMillivoltDeltaMax">Cell Millivolt Delta Max:</label>
+        <input type="number" id="cellMillivoltDeltaMax" required>
+        <br><br>
+
+        <label for="socMin">SOC Min:</label>
+        <input type="number" id="socMin" min="0" max="100" required>
+
+        <label for="socMax">SOC Max:</label>
+        <input type="number" id="socMax" min="0" max="100" required>
+        <br><br>
+
+        <label for="dodMin">DOD Min:</label>
+        <input type="number" id="dodMin" min="0" max="100" required>
+
+        <label for="dodMax">DOD Max:</label>
+        <input type="number" id="dodMax" min="0" max="100" required>
+        <br><br>
+
+        <button type="submit">Submit</button>
+    </form>
+
+    </form>
+
+    <script>
+        var slidermin = document.getElementById("minDOD");
+        var outputmin = document.getElementById("minDODval");
+        outputmin.innerHTML = slidermin.value; // Display the default slider value
+
+        // Update the current slider value (each time you drag the slider handle)
+        slidermin.oninput = function () {
+            outputmin.innerHTML = this.value;
+            if (this.value > slidermax.value) {
+                outputmax.innerHTML = this.value;
+                slidermax.value = this.value;
+            }
+        }
+        var slidermax = document.getElementById("maxDOD");
+        var outputmax = document.getElementById("maxDODval");
+
+        outputmax.innerHTML = slidermax.value; // Display the default slider value
+
+        // Update the current slider value (each time you drag the slider handle)
+        slidermax.oninput = function () {
+            outputmax.innerHTML = this.value;
+            if (this.value < slidermin.value) {
+                outputmin.innerHTML = this.value;
+                slidermin.value = this.value;
+            }
+        }
+
+        function toggleDHCP() {
+            const dhcpButton = document.getElementById("dhcpButton");
+            const networkForm = document.getElementById("networkForm");
+            const ipAddressInput = document.getElementById("ipAddress");
+            const subnetInput = document.getElementById("subnet");
+            const dnsInput = document.getElementById("dns");
+            const gatewayInput = document.getElementById("gateway");
+            const mqttHostnameInput = document.getElementById("mqttHostname");
+            const submitButton = document.getElementById("submitButton");
+
+            if (dhcpButton.textContent === "Off") {
+                dhcpButton.textContent = "On";
+                // networkForm.classList.add("disabled");
+                ipAddressInput.setAttribute("disabled", "true");
+                // ipAddressInput.setAttribute("value", "0.0.0.0");
+                subnetInput.setAttribute("disabled", "true");
+                dnsInput.setAttribute("disabled", "true");
+                gatewayInput.setAttribute("disabled", "true");
+                submitButton.setAttribute("disabled", "true");
+            } else {
+                dhcpButton.textContent = "Off";
+                // networkForm.classList.remove("disabled");
+                ipAddressInput.removeAttribute("disabled");
+                subnetInput.removeAttribute("disabled");
+                dnsInput.removeAttribute("disabled");
+                gatewayInput.removeAttribute("disabled");
+                submitButton.removeAttribute("disabled");
+            }
+        }
+
+        function validateMqttForm() {
+            return true;
+        }
+        function validateIpForm() {
+            // IP Address Validation
+            const ipAddress = document.getElementById('ipAddress').value;
+            const ipRegex = /^([0-9]{1,3}\.){3}[0-9]{1,3}$/;
+            if (!ipRegex.test(ipAddress)) {
+                alert('Invalid IP Address');
+                return false;
+            }
+
+            // Subnet Validation
+            const subnet = document.getElementById('subnet').value;
+            const subnetRegex = /^([0-9]{1,3}\.){3}[0-9]{1,3}$/;
+            if (!subnetRegex.test(subnet)) {
+                alert('Invalid Subnet');
+                return false;
+            }
+
+            // Gateway Validation
+            const gateway = document.getElementById('gateway').value;
+            const gatewayRegex = /^([0-9]{1,3}\.){3}[0-9]{1,3}$/;
+            if (!gatewayRegex.test(gateway)) {
+                alert('Invalid Gateway');
+                return false;
+            }
+
+            // MQTT Server Validation
+            const mqttHostname = document.getElementById('mqttHostname').value;
+            if (mqttHostname.trim() === '') {
+                alert('MQTT Hostname is required');
+                return false;
+            }
+
+            // Port Validation
+            const mqttPort = document.getElementById('mqttPort').value;
+            if (mqttPort.trim() === '') {
+                alert('MQTT Port is required');
+                return false;
+            }
+
+            // Username Validation
+            const mqttUsername = document.getElementById('mqttUsername').value;
+            if (mqttUsername.trim() === '') {
+                alert('MQTT Username is required');
+                return false;
+            }
+
+            // Password Validation
+            const mqttPassword = document.getElementById('mqttPassword').value;
+            if (mqttPassword.trim() === '') {
+                alert('MQTT Password is required');
+                return false;
+            }
+
+            // Depth of Discharge Validation
+            const minDOD = document.getElementById('minDOD').value;
+            const maxDOD = document.getElementById('maxDOD').value;
+            if (minDOD < 10 || minDOD > 100 || maxDOD < 10 || maxDOD > 100 || minDOD >= maxDOD) {
+                alert('Invalid Depth of Discharge');
+                return false;
+            }
+
+            return true;
+        }
+    </script>
+</body>
+
+
+</html>

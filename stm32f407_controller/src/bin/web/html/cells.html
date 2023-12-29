@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" lang="en" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <link rel="stylesheet" href="https://unpkg.com/mvp.css@1.12/mvp.css"> -->
+    <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.min.css">
+    <link
+        href="data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQEAYAAABPYyMiAAAABmJLR0T///////8JWPfcAAAACXBIWXMAAABIAAAASABGyWs+AAAAF0lEQVRIx2NgGAWjYBSMglEwCkbBSAcACBAAAeaR9cIAAAAASUVORK5CYII="
+        rel="icon" type="image/x-icon" />
+    <title>Toucan Gateway - Home</title>
+    <style>
+        .chart {
+            width: 100%;
+            height: 2300px;
+            /* border: 1px solid #ccc; */
+            touch-action: hover;
+            text-align: center;
+        }
+
+        .bar {
+            height: 100px;
+            margin-right: 2px;
+            display: inline-block;
+        }
+
+        .green {
+            background-color: green;
+        }
+
+        .red {
+            background-color: red;
+        }
+
+        .bar::after {
+            content: attr(data-value);
+            position: absolute;
+            top: -20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .bar-group {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+
+<body class="container">
+    <nav>
+        <h1>Cells</h1>
+        <details role="list">
+            <summary aria-haspopup="listbox">Navigation</summary>
+            <ul role="listbox">
+                <li><a href="./">Home</a></li>
+                <li><a href="./settings">Settings</a></li>
+                <li><a href="./cells">Cells</a></li>
+                <li><a href="./restart">Restart</a></li>
+            </ul>
+        </details>
+    </nav>
+    <main>
+        <article>
+            <section>
+                <h2>Snapshot data -
+                    <script> document.write(new Date().toLocaleTimeString()); </script>
+                </h2>
+            </section>
+            <section>
+                <div class="chart" id="chartContainer"></div>
+            </section>
+        </article>
+    </main>
+    <footer>
+        <hr>
+        <section><a href="mailto:my@email.com">Support</a></section>
+    </footer>
+</body>
+<script>
+    window.addEventListener("load", (async () => { console.log("JS load"); try { fetch("./api/cells").then((e => e.text())).then((e => { console.log(e); const t = e.split(","); console.log(t); const n = document.getElementById("chartContainer"); for (let e = 0; e < t.length - 1; e += 2) { const o = parseInt(t[e]), a = "1" === t[e + 1]; console.log(t[e], a); const l = document.createElement("div"); l.className = "bar", l.style.height = "10px", l.style.width = "10px", l.style.marginLeft = "1px;", l.style.marginTop = "1px;", e % 32 == 0 && (barGroup = document.createElement("div"), barGroup.className = "bar-group", n.appendChild(barGroup)), a ? (l.classList.add("red"), l.addEventListener("mouseover", (function () { l.setAttribute("title", o + "mV balancing") }))) : (l.classList.add("green"), l.addEventListener("mouseover", (function () { l.setAttribute("title", o + "mV") }))), n.appendChild(l) } })) } catch (e) { console.error(e); const t = document.createElement("h1"); t.textContent = "Internal data error", document.getElementById("data_id").appendChild(t) } }));
+</script>
+
+</html>

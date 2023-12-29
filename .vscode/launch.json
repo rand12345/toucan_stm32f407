@@ -1,0 +1,32 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "preLaunchTask": "", //Configure a default build task for 'cargo build'
+            "type": "probe-rs-debug",
+            "request": "launch",
+            "name": "probe_rs Server attach example",
+            "server": "127.0.0.1:50000", //!MODIFY ... can be a server that is remote from the VSCode session, but local to the probe
+            "cwd": "${workspaceFolder}",
+            "speed": 24000, //!MODIFY (or remove)
+            "chip": "STM32F407VETx", //!MODIFY
+            // "probe": "VID:PID:<Serial>", //!MODIFY (or remove)
+            "flashingConfig": {
+                "flashingEnabled": true,
+                "resetAfterFlashing": true,
+                "haltAfterReset": false
+            },
+            "coreConfigs": [
+                {
+                    "coreIndex": 0,
+                    "programBinary": "target/thumbv7em-none-eabi/release/main", //!MODIFY
+                    "svdFile": "svd" //!MODIFY
+                }
+            ],
+            "env": {
+                "RUST_LOG": "debug"
+            }, //!This won't take effect. Please set environment variables before launching `probe-rs-debugger`.
+            "consoleLogLevel": "Console" //Info, Debug
+        }
+    ]
+}
