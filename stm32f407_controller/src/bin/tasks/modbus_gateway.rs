@@ -141,7 +141,7 @@ pub async fn modbus_task(stack: StackType, serial: RS485<'static>, tx_en: PD7) {
                 tcp_payload.extend_from_slice(&tcp_recv_buf[0..5]).unwrap();
                 tcp_payload.push(0x3).unwrap();
                 tcp_payload.extend_from_slice(&buf[0..3]).unwrap();
-                warn!("Sending TCP {:x}", tcp_payload);
+                // warn!("Sending TCP {:x}", tcp_payload);
                 if let Err(e) = socket.write(&tcp_payload).await {
                     error!("TCP send error 1 {}", e);
                     break 'inner;

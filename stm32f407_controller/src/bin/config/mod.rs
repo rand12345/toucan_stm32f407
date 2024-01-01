@@ -1,4 +1,5 @@
 use crate::errors::StmError;
+// use crate::tasks::ntp::Time;
 use bms_standard::MinMax;
 use defmt::{error, Format};
 use miniserde::__private::String;
@@ -8,6 +9,7 @@ use miniserde::{json, Deserialize, Serialize};
 pub struct GlobalState {
     state: State,
     fault: Fault,
+    time: i64,
 }
 impl GlobalState {
     pub fn state(&self) -> &State {

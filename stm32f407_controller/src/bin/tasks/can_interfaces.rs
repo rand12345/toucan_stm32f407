@@ -27,7 +27,7 @@ pub async fn inverter_task(mut can: Can<'static, CAN2>, baud: u32) {
     let inv_tx = INVERTER_CHANNEL_TX.receiver();
     // Wait for CAN1 to initalise
     CAN_READY.wait().await;
-    can2_init(&can).await;
+    can2_init(&mut can).await;
     can.set_bitrate(baud);
     can.enable().await;
 
@@ -43,7 +43,7 @@ pub async fn inverter_task(mut can: Can<'static, CAN2>, baud: u32) {
 pub async fn bms_task(mut can: Can<'static, CAN1>, baud: u32) {
     let bms_rx = BMS_CHANNEL_RX.sender();
     let bms_tx = BMS_CHANNEL_TX.receiver();
-    can1_init(&can).await;
+    can1_init(&mut can).await;
     can.set_bitrate(baud);
     can.enable().await;
     warn!("Starting BMS Can1");
@@ -82,7 +82,7 @@ async fn can_routine<C, const B: usize>(
     }
 }
 
-async fn can1_init(can: &Can<'static, CAN1>) {
+async fn can1_init(can: &mut Can<'static, CAN1>) {
     // BMS Filter ============================================
     #[cfg(feature = "ze50")]
     can.as_mut().modify_filters().set_split(1).enable_bank(
@@ -115,7 +115,7 @@ async fn can1_init(can: &Can<'static, CAN1>) {
         .leave_disabled();
 }
 
-async fn can2_init(can: &Can<'static, CAN2>) {
+async fn can2_init(can: &mut Can<'static, CAN2>) {
     can.as_mut()
         .modify_config()
         .set_loopback(false) // Receive own frames

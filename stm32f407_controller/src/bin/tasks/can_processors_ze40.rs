@@ -18,7 +18,6 @@ const DIAG_TIME_MS: u64 = 5000;
 pub async fn bms_tx_periodic() {
     use embassy_futures::select::{select, Either};
     use embassy_time::{Duration, Ticker};
-    use embedded_hal::timer::CountDown;
     let tx = BMS_CHANNEL_TX.sender();
     let ticker_ms = |ms| Ticker::every(Duration::from_millis(ms));
     let sender = |frame| {

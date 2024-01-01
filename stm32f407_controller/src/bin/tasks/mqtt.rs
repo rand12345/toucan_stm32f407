@@ -9,14 +9,12 @@ use defmt::error;
 use defmt::info;
 use defmt::Debug2Format;
 use dotenvy_macro::dotenv;
-use embassy_net::tcp::client::{TcpClient, TcpClientState};
-use embassy_net::Stack;
-use embassy_stm32::peripherals::*;
-use embassy_stm32::usart::Uart;
+use embassy_net::{
+    tcp::client::{TcpClient, TcpClientState},
+    Stack,
+};
+use embassy_stm32::{peripherals::*, usart::Uart};
 use embassy_time::{Duration, Instant, Timer};
-use embedded_nal_async::IpAddr;
-use embedded_nal_async::Ipv4Addr;
-use embedded_nal_async::SocketAddr;
 use miniserde::__private::String;
 use miniserde::{json, Serialize};
 use rust_mqtt::packet::v5::publish_packet::QualityOfService::*;
@@ -45,8 +43,10 @@ pub async fn mqtt_net_task(stack: &'static Stack<EthDevice>) {
         Timer::after(Duration::from_millis(1500)).await;
     }
     info!("Spawning MQTT client");
-    static STATE: TcpClientState<1, 2048, 2048> = TcpClientState::new();
-    let client = TcpClient::new(stack, &STATE);
+
+    use embedded_nal_async::{Ipv4Addr, SocketAddr, SocketAddrV4, TcpConnect};
+    let state: TcpClientState<1, 2048, 2048> = TcpClientState::new();
+    let client = TcpClient::new(stack, &state);
 
     let nvs_config = crate::config::MqttConfig::new(
         Some(dotenv!("host").to_string()),
@@ -67,11 +67,10 @@ pub async fn mqtt_net_task(stack: &'static Stack<EthDevice>) {
     if nvs_config.port.is_none() {
         panic!("Bad mqtt port");
     }
-    let addr = SocketAddr::new(IpAddr::V4(ip.unwrap()), nvs_config.port.unwrap());
+    let addr = SocketAddr::V4(SocketAddrV4::new(ip.unwrap(), nvs_config.port.unwrap()));
 
     loop {
         info!("Setting up MQTT connection");
-        use embedded_nal_async::TcpConnect;
 
         let tcp = match client.connect(addr).await {
             Ok(t) => t,

@@ -1,23 +1,61 @@
 #![allow(unused_imports)]
+use cortex_m::peripheral;
 use embassy_net::Stack;
 use embassy_stm32::{
     bind_interrupts,
     can::{Can, Rx0InterruptHandler, Rx1InterruptHandler, SceInterruptHandler, TxInterruptHandler},
     eth::{self, generic_smi::GenericSMI, Ethernet, PacketQueue},
-    peripherals::*,
+    peripherals::{self, *},
+    rcc,
+    rng::{self, Rng},
     sdmmc::Sdmmc,
     spi::Spi,
-    time::mhz,
+    time::{hz, mhz, Hertz},
     usart,
 };
 
-use static_cell::make_static;
+use static_cell::StaticCell;
 
 use crate::{
     statics,
     types::{EthDevice, Usart6Type, RS232, RS485},
     MAC_ADDR,
 };
+
+pub fn peripherals_config() -> embassy_stm32::Config {
+    let mut config = embassy_stm32::Config::default();
+    /*
+    rcc: Clocks { sys: Hertz(168000000), pclk1: Hertz(42000000), pclk1_tim: Hertz(84000000), pclk2: Hertz(84000000), pclk2_tim: Hertz(168000000), hclk1: Hertz(168000000), hclk2: Hertz(168000000), hclk3: Hertz(168000000), plli2s1_q: None, plli2s1_r: None, pll1_q: Some(Hertz(48000000)), rtc: Some(Hertz(32768)) }
+    */
+    {
+        use embassy_stm32::rcc::*;
+        config.rcc.ls = LsConfig {
+            rtc: RtcClockSource::LSE,
+            lsi: false,
+            lse: Some(LseConfig {
+                frequency: Hertz(32_768),
+                mode: LseMode::Oscillator(LseDrive::MediumHigh),
+            }),
+        };
+        config.rcc.hse = Some(Hse {
+            freq: Hertz(25_000_000),
+            mode: HseMode::Oscillator,
+        });
+        config.rcc.pll_src = PllSource::HSE;
+        config.rcc.pll = Some(Pll {
+            prediv: PllPreDiv::DIV25,
+            mul: PllMul::MUL336,
+            divp: Some(PllPDiv::DIV2),
+            divq: Some(PllQDiv::DIV7),
+            divr: None,
+        });
+        config.rcc.ahb_pre = AHBPrescaler::DIV1;
+        config.rcc.apb1_pre = APBPrescaler::DIV4;
+        config.rcc.apb2_pre = APBPrescaler::DIV2;
+        config.rcc.sys = Sysclk::PLL1_P;
+    }
+    config
+}
 
 // bind_interrupts!(struct IrqI2c {
 //     I2C1_EV => embassy_stm32::i2c::InterruptHandler<embassy_stm32::peripherals::I2C1>;
@@ -26,17 +64,6 @@ use crate::{
 #[embassy_executor::task]
 pub async fn net_task(stack: &'static Stack<EthDevice>) -> ! {
     stack.run().await
-}
-
-pub fn peripherals_config() -> embassy_stm32::Config {
-    let mut config = embassy_stm32::Config::default();
-    config.rcc.hse = Some(mhz(25));
-    config.rcc.sys_ck = Some(mhz(168));
-    config.rcc.hclk = Some(mhz(148));
-    config.rcc.pclk1 = Some(mhz(48));
-    config.rcc.pclk2 = Some(mhz(84));
-    config.rcc.pll48 = true;
-    config
 }
 
 #[cfg(feature = "nvs")]
@@ -154,6 +181,7 @@ pub fn can2(p: CAN2, rx: PB5, tx: PB6) -> Can<'static, CAN2> {
 }
 
 pub async fn get_eth(
+    // prng: Rng,
     p: ETH,
     ref_clk: PA1,
     mdio: PA2,
@@ -172,17 +200,19 @@ pub async fn get_eth(
     // Ethernet
     bind_interrupts!(struct IrqETH {
         ETH => eth::InterruptHandler;
+        // HASH_RNG => rng::InterruptHandler<peripherals::RNG>;
     });
     // Generate random seed.
 
-    // let mut rng = Rng::new(p.RNG, IrqETH);
+    // let mut rng = Rng::new(prng, IrqETH);
     let seed = [0; 8];
     // let _ = rng.async_fill_bytes(&mut seed).await;
     let seed = u64::from_le_bytes(seed);
+    static PACKETS: StaticCell<PacketQueue<4, 4>> = StaticCell::new();
 
     // let seed = u64::from_le_bytes(seed);
     let eth = Ethernet::new(
-        make_static!(PacketQueue::<4, 4>::new()),
+        PACKETS.init(PacketQueue::<4, 4>::new()),
         p,
         IrqETH,
         ref_clk,
@@ -194,9 +224,8 @@ pub async fn get_eth(
         tx_d0,
         tx_d1,
         tx_en, //tx_en
-        GenericSMI::new(),
+        GenericSMI::new(1),
         MAC_ADDR,
-        1,
     );
     let netconfig = { statics::NETCONFIG.lock().await.get_config() };
 

@@ -8,6 +8,7 @@ impl<'a> ByteMutWriter<'a> {
         ByteMutWriter { buf, cursor: 0 }
     }
 
+    #[allow(dead_code)]
     pub fn cursor(&self) -> usize {
         self.cursor
     }

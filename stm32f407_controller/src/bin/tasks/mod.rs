@@ -2,6 +2,7 @@ use defmt::{info, warn};
 use embassy_stm32::{
     gpio::{Level, Output, OutputType, Speed},
     peripherals::{PA4, PA6, TIM3},
+    timer::CountingMode,
 };
 
 use embassy_stm32::time::khz;
@@ -37,12 +38,16 @@ pub mod modbus_gateway;
 // pub mod modbus_tcp_gateway;
 pub mod mqtt;
 
+#[cfg(feature = "ntp")]
+pub mod ntp;
+
 // Misc tasks
 
 #[embassy_executor::task]
 pub async fn contactor_main_task(main: PA6, timer: TIM3) {
     let ch1 = PwmPin::new_ch1(main, OutputType::PushPull);
-    let mut pwm = SimplePwm::new(timer, Some(ch1), None, None, None, khz(1));
+    let counting_mode = CountingMode::EdgeAlignedDown;
+    let mut pwm = SimplePwm::new(timer, Some(ch1), None, None, None, khz(1), counting_mode);
     let max = pwm.get_max_duty() - 1;
     let mut active = false;
     loop {
@@ -86,7 +91,9 @@ pub async fn contactor_main_task(main: PA6, timer: TIM3) {
 pub async fn contactor_both_task(pre: PA4, main: PA6, timer: TIM3) {
     let mut pre = Output::new(pre, Level::Low, Speed::Medium);
     let main = PwmPin::new_ch1(main, OutputType::PushPull);
-    let mut pwm = SimplePwm::new(timer, Some(main), None, None, None, khz(1));
+
+    let counting_mode = CountingMode::EdgeAlignedDown;
+    let mut pwm = SimplePwm::new(timer, Some(main), None, None, None, khz(1), counting_mode);
     let max = pwm.get_max_duty() - 1;
     let mut active = false;
     loop {

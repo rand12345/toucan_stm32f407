@@ -1,0 +1,8 @@
+/target
+**/*.rs.bk
+
+# IDEA
+/.idea/
+
+# Rust
+/Cargo.lock
