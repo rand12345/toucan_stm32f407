@@ -47,7 +47,7 @@ mod utils;
 mod wdt;
 mod web;
 
-pub const MAC_ADDR: [u8; 6] = [0x00, 0x01, 0xDE, 0xAD, 0xBE, 0xEF]; // prod_device
+pub const MAC_ADDR: [u8; 6] = [0x00, 0x00, 0xDE, 0xAD, 0xBE, 0xEF]; // prod_device
                                                                     // const MAC_ADDR: [u8; 6] = [0x00, 0x01, 0xDE, 0xAD, 0xBE, 0xEF];  // test_device
 
 #[embassy_executor::main]
@@ -125,7 +125,7 @@ async fn main(spawner: Spawner) -> () {
         bms.config.set_charge_limts(0.0, 150.0).unwrap();
         // bms.config.set_charge_limts(0.0, 135.0).unwrap();
         // summer mode -> dod max 90
-        bms.set_dod(5, 90).unwrap();
+        bms.set_dod(5, 100).unwrap();
 
         let mut config = crate::statics::CONFIG.lock().await;
         config.import_from_bms(bms.config)
@@ -181,7 +181,7 @@ async fn main(spawner: Spawner) -> () {
     unwrap!(spawner.spawn(tasks::tcp_debug::debug_task(stack)));
 
     unwrap!(spawner.spawn(tasks::mqtt::mqtt_net_task(stack)));
-    unwrap!(spawner.spawn(tasks::modbus_gateway::modbus_task(stack, rs485, p.PD7)));
+    unwrap!(spawner.spawn(tasks::modbus::modbus_task(stack, rs485, p.PD7)));
     loop {
         debug!("Heap free: {} used: {}", HEAP.free(), HEAP.used());
         embassy_time::Timer::after(embassy_time::Duration::from_secs(10)).await;

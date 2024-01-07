@@ -129,7 +129,6 @@ pub async fn ntp_task(stack: StackType, mut rtc: Rtc) {
     };
 
     loop {
-        embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
         if let Ok(now) = rtc.now() {
             info!(
                 "RTC: {}/{}/{} {}:{}:{}",
@@ -141,6 +140,8 @@ pub async fn ntp_task(stack: StackType, mut rtc: Rtc) {
                 now.second(),
             );
         }
+        // try update
+        embassy_time::Timer::after(embassy_time::Duration::from_secs(60 * 60 * 24)).await;
     }
 }
 

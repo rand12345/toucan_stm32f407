@@ -2,7 +2,7 @@
 authors = ["Nobody_Nowhere <63668759+rand12345@users.noreply.github.com>"]
 name = "stm32f407_controller"
 edition = "2021"
-version = "0.1.1"
+version = "0.1.2"
 
 [[bin]]
 name = "main"

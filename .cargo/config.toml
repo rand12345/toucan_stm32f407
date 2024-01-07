@@ -2,7 +2,7 @@
 
 board="STM32F407VETx"
 
-runner = "probe-run --chip STM32F407VETx"
+runner = "probe-rs run --chip STM32F407VETx"
 # runner = "probe-run --chip STM32F407VETx --connect-under-reset"
 rustflags = [
   "-C", "link-arg=-Tlink.x",

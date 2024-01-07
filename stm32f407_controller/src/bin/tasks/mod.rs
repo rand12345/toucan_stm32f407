@@ -9,7 +9,6 @@ use embassy_stm32::time::khz;
 use embassy_stm32::timer::simple_pwm::{PwmPin, SimplePwm};
 use embassy_stm32::timer::Channel;
 use embassy_time::{Duration, Timer};
-// use embedded_hal::digital::v2::OutputPin;
 
 use crate::statics::CONTACTOR_STATE;
 
@@ -34,8 +33,8 @@ pub mod can_processors_solax;
 pub mod can_processors_tesla_m3;
 
 pub mod leds;
-pub mod modbus_gateway;
-// pub mod modbus_tcp_gateway;
+
+pub mod modbus;
 pub mod mqtt;
 
 #[cfg(feature = "ntp")]

@@ -24,11 +24,12 @@ use crate::{
 
 pub fn peripherals_config() -> embassy_stm32::Config {
     let mut config = embassy_stm32::Config::default();
+    use embassy_stm32::rcc::*;
     /*
     rcc: Clocks { sys: Hertz(168000000), pclk1: Hertz(42000000), pclk1_tim: Hertz(84000000), pclk2: Hertz(84000000), pclk2_tim: Hertz(168000000), hclk1: Hertz(168000000), hclk2: Hertz(168000000), hclk3: Hertz(168000000), plli2s1_q: None, plli2s1_r: None, pll1_q: Some(Hertz(48000000)), rtc: Some(Hertz(32768)) }
     */
     {
-        use embassy_stm32::rcc::*;
+        // let p = embassy_stm32::init(config);
         config.rcc.ls = LsConfig {
             rtc: RtcClockSource::LSE,
             lsi: false,
@@ -104,6 +105,8 @@ pub fn rs485(
     });
     let mut config = embassy_stm32::usart::Config::default();
     config.baudrate = 9600;
+    config.assume_noise_free = false;
+    // config.detect_previous_overrun = true;
     usart::Uart::new(p, rx_pin, tx_pin, IrqUSART2, tx_dma, rx_dma, config).unwrap()
 }
 
