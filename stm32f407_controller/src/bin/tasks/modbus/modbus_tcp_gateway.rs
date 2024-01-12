@@ -17,7 +17,7 @@ use super::modbus_data::{ModbusRtu, ModbusTcp};
 
 pub const RX_TIMEOUT_BYTE: u64 = 200;
 
-const TCP_TIMEOUT_SECS: u64 = 3;
+const TCP_TIMEOUT_SECS: u64 = 60;
 
 #[embassy_executor::task]
 pub async fn modbus_task(stack: StackType, serial: RS485<'static>, tx_en: PD7) {
