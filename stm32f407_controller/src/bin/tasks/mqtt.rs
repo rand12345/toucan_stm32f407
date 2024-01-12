@@ -1,10 +1,9 @@
 use crate::config::JsonTrait;
-use crate::errors::StmError;
+
 use crate::statics::*;
 use crate::types::EthDevice;
-use alloc::string::ToString;
+
 use core::fmt::{self, Write};
-use core::str::FromStr;
 use defmt::error;
 use defmt::info;
 use defmt::Debug2Format;
@@ -15,15 +14,24 @@ use embassy_net::{
 };
 use embassy_stm32::{peripherals::*, usart::Uart};
 use embassy_time::{Duration, Instant, Timer};
-use miniserde::__private::String;
+use rust_mqtt::client::client_config::MqttVersion::*;
+
 use miniserde::{json, Serialize};
-use rust_mqtt::packet::v5::publish_packet::QualityOfService::*;
+use rust_mqtt::packet::v5::publish_packet::QualityOfService::{self, *};
 use rust_mqtt::{
     client::{client::MqttClient, client_config::ClientConfig},
     utils::rng_generator::CountingRng,
 };
 
 const BUF_SIZE: usize = 1500;
+
+#[derive(Clone, Debug)]
+pub struct MqttMessage<'a> {
+    pub topic: &'a str,
+    pub payload: &'a str,
+    pub qos: QualityOfService,
+    pub retain: bool,
+}
 
 #[embassy_executor::task]
 pub async fn mqtt_net_task(stack: &'static Stack<EthDevice>) {
@@ -44,34 +52,38 @@ pub async fn mqtt_net_task(stack: &'static Stack<EthDevice>) {
     }
     info!("Spawning MQTT client");
 
-    use embedded_nal_async::{Ipv4Addr, SocketAddr, SocketAddrV4, TcpConnect};
+    use embedded_nal_async::{SocketAddr, TcpConnect};
     let state: TcpClientState<1, 2048, 2048> = TcpClientState::new();
     let client = TcpClient::new(stack, &state);
 
-    let nvs_config = crate::config::MqttConfig::new(
-        Some(dotenv!("host").to_string()),
-        dotenv!("port").parse().ok(),
-        Some(dotenv!("client_id").to_string()),
-        Some(dotenv!("username").to_string()),
-        Some(dotenv!("password").to_string()),
-        Some(dotenv!("topic").to_string()),
-        1,
-        dotenv!("retain") == "true",
-        dotenv!("interval").parse().unwrap_or(10),
-    );
-    let ip = Ipv4Addr::from_str(nvs_config.host.as_ref().unwrap()).map_err(|_| StmError::BadMqttIp);
-
-    if ip.is_err() {
-        panic!("Bad mqtt IP");
-    }
-    if nvs_config.port.is_none() {
-        panic!("Bad mqtt port");
-    }
-    let addr = SocketAddr::V4(SocketAddrV4::new(ip.unwrap(), nvs_config.port.unwrap()));
+    let mqtt_config = crate::config::MqttConfig::builder()
+        .host(dotenv!("host"))
+        .port(dotenv!("port").parse().expect("Bad MQTT port in env file"))
+        .client_id(dotenv!("client_id"))
+        .username(dotenv!("username"))
+        .password(dotenv!("password"))
+        .basetopic(dotenv!("topic"))
+        .qos(dotenv!("qos").parse().expect("Bad QOS number in env file"))
+        .retain(dotenv!("retain") == "true")
+        .interval(
+            dotenv!("interval")
+                .parse()
+                .expect("Bad MQTT interval number in env file"),
+        )
+        .build();
 
     loop {
         info!("Setting up MQTT connection");
 
+        let addr =
+            SocketAddr::try_from(&mqtt_config).expect("MQTT host details are not valid IPv4");
+
+        let retain = mqtt_config.get_retain();
+        let qos = match mqtt_config.get_qos() {
+            1 => QoS1,
+            2 => QoS2,
+            _ => QoS0,
+        };
         let tcp = match client.connect(addr).await {
             Ok(t) => t,
             Err(e) => {
@@ -80,19 +92,15 @@ pub async fn mqtt_net_task(stack: &'static Stack<EthDevice>) {
                 continue;
             }
         };
-
-        use rust_mqtt::client::client_config::MqttVersion::*;
-
         let mut config = ClientConfig::new(MQTTv5, CountingRng(50000));
-        config.add_username(nvs_config.username.as_ref().unwrap());
-        config.add_password(nvs_config.password.as_ref().unwrap());
+        config.add_username(mqtt_config.get_username());
+        config.add_password(mqtt_config.get_password());
         config.max_packet_size = 6000;
         config.keep_alive = 60000;
         config.max_packet_size = 300;
         let mut recv_buffer = [0; BUF_SIZE];
         let mut write_buffer = [0; BUF_SIZE];
 
-        // use embedded_io::asynch::Read;
         let mut client = MqttClient::<_, 5, _>::new(
             tcp,
             &mut write_buffer,
@@ -101,12 +109,12 @@ pub async fn mqtt_net_task(stack: &'static Stack<EthDevice>) {
             BUF_SIZE,
             config,
         );
+
         match client.connect_to_broker().await {
             Ok(_) => info!("MQTT connected ok"),
             Err(e) => {
                 error!("MQTT Failed {}", e);
-                error!("{}", Debug2Format(&nvs_config));
-                // break;
+                error!("{}", Debug2Format(&mqtt_config));
                 Timer::after(Duration::from_secs(10)).await;
                 continue;
             }
@@ -114,13 +122,7 @@ pub async fn mqtt_net_task(stack: &'static Stack<EthDevice>) {
 
         'inner: loop {
             info!("Setting up MQTT message");
-            // let message = match messagebus.next_message_pure().await {
-            //     crate::types::messagebus::Message::Mqtt(message) => message,
-            //     _ => continue,
-            // };
 
-            // let _ = SEND_MQTT.wait().await;
-            //
             if let Err(e) = client.send_ping().await {
                 error!("No response from MQTT server {}", e);
                 match client.disconnect().await {
@@ -134,9 +136,6 @@ pub async fn mqtt_net_task(stack: &'static Stack<EthDevice>) {
                 break 'inner;
             }
 
-            let mut topic: heapless::String<50> = heapless::String::new();
-            let _ = topic.push_str("test_data"); // temp debug
-            let mut payload: heapless::String<512> = heapless::String::new();
             let p = match MQTTFMT.try_lock() {
                 Ok(p) => p.device_update_msg(),
                 Err(_) => {
@@ -144,42 +143,32 @@ pub async fn mqtt_net_task(stack: &'static Stack<EthDevice>) {
                     break 'inner;
                 }
             };
-            if p.len() > 512 {
-                error!("JSON payload {} > 512", p.len());
-                continue;
-            }
-            payload.push_str(&p).unwrap();
-            let qos = match nvs_config.qos {
-                1 => QoS1,
-                2 => QoS2,
-                _ => QoS0,
-            };
-            let message = crate::types::messagebus::MqttMessage {
-                topic,
-                payload,
+
+            let message = MqttMessage {
+                topic: mqtt_config.get_topic(),
+                payload: p.as_str(),
                 qos,
-                retain: nvs_config.retain,
+                retain,
             };
 
             // let mqtt_data = { *MQTTFMT.lock().await };
             if let Err(e) = client
                 .send_message(
-                    &message.topic,
+                    message.topic,
                     message.payload.as_bytes(),
                     message.qos,
                     message.retain,
                 )
-                // .send_message(topic, mqtt_data.device_update_msg().as_bytes(), qos, retain)
                 .await
             {
                 error!("MQTT send {}", e);
                 break 'inner;
             }
             // rate limiter
-            embassy_time::Timer::after(Duration::from_secs(nvs_config.interval.into())).await;
+            embassy_time::Timer::after(Duration::from_secs(mqtt_config.get_interval().into()))
+                .await;
         }
         defmt::warn!("Dropping MQTT client");
-        // drop(client);
     }
 }
 
@@ -200,7 +189,7 @@ pub async fn uart_task(uart: Uart<'static, USART6, DMA2_CH7, DMA2_CH2>) {
             Either::First(read) => match read {
                 Ok(len) => {
                     let mut config = CONFIG.lock().await;
-                    if let Err(e) = config.from_json(&buf[..len]) {
+                    if let Err(e) = config.decode_from_json(&buf[..len]) {
                         let message = if let Ok(message) = core::str::from_utf8(&buf[..len]) {
                             message
                         } else {
@@ -323,7 +312,7 @@ impl MqttFormat {
         }
     }
 
-    fn device_update_msg(&self) -> String {
+    fn device_update_msg(&self) -> alloc::string::String {
         json::to_string(&self)
     }
 }

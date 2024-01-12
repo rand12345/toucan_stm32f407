@@ -23,7 +23,7 @@ pub static LED_COMMAND: LedCommandType = Signal::new();
 lazy_static! {
     // thin this down - use singletons from main?
     pub static ref NETCONFIG: MutexType<NetConfig> = Mutex::new(NetConfig::new(true, None, None, None, None));
-    pub static ref MQTTCONFIG: MutexType<MqttConfig> = Mutex::new(MqttConfig::new(None,None, None, None, None, None, 0, false, 10));
+    pub static ref MQTTCONFIG: MutexType<MqttConfig> = Mutex::new(MqttConfig::default());
     pub static ref MQTTFMT: MutexType<MqttFormat> = Mutex::new(MqttFormat::default());
     pub static ref CONFIG: MutexType<Config> = Mutex::new(Config::default());
     pub static ref GLOBALSTATE: MutexType<GlobalState> = Mutex::new(GlobalState::default());

@@ -27,7 +27,6 @@ pub struct RtuData(RtuRxPayload, RtuTxPayload);
 
 #[derive(Default)]
 pub struct TcpData(TcpRxPayload, TcpTxPayload);
-const DEBUG: bool = true;
 
 macro_rules! debug_data {
     ($data:expr) => {{

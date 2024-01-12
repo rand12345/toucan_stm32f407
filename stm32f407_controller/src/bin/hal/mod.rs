@@ -29,7 +29,6 @@ pub fn peripherals_config() -> embassy_stm32::Config {
     rcc: Clocks { sys: Hertz(168000000), pclk1: Hertz(42000000), pclk1_tim: Hertz(84000000), pclk2: Hertz(84000000), pclk2_tim: Hertz(168000000), hclk1: Hertz(168000000), hclk2: Hertz(168000000), hclk3: Hertz(168000000), plli2s1_q: None, plli2s1_r: None, pll1_q: Some(Hertz(48000000)), rtc: Some(Hertz(32768)) }
     */
     {
-        // let p = embassy_stm32::init(config);
         config.rcc.ls = LsConfig {
             rtc: RtcClockSource::LSE,
             lsi: false,
@@ -183,6 +182,7 @@ pub fn can2(p: CAN2, rx: PB5, tx: PB6) -> Can<'static, CAN2> {
     Can::new(p, rx, tx, IrqCAN)
 }
 
+#[allow(clippy::too_many_arguments)]
 pub async fn get_eth(
     // prng: Rng,
     p: ETH,

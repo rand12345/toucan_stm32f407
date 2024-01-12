@@ -1,9 +1,13 @@
+use core::str::FromStr;
+
 use crate::errors::StmError;
+use alloc::string::ToString;
 // use crate::tasks::ntp::Time;
 use bms_standard::MinMax;
-use defmt::{error, Format};
+use defmt::error;
 use miniserde::__private::String;
 use miniserde::{json, Deserialize, Serialize};
+use no_std_net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 
 #[derive(Default, Serialize)]
 pub struct GlobalState {
@@ -26,32 +30,8 @@ impl GlobalState {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Format, Clone, Copy)]
-pub enum ConfigName {
-    Config,
-    NetConfig,
-    MqttConfig,
-}
-impl ConfigName {
-    pub fn as_bytes(&self) -> &[u8] {
-        match self {
-            ConfigName::Config => b"config",
-            ConfigName::MqttConfig => b"mqttconfig",
-            ConfigName::NetConfig => b"netconfig",
-        }
-    }
-    pub fn as_str(&self) -> &str {
-        match self {
-            ConfigName::Config => "config",
-            ConfigName::MqttConfig => "mqttconfig",
-            ConfigName::NetConfig => "netconfig",
-        }
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug)] // references only
 pub struct Config {
-    name: ConfigName,
     charge_current: MinMax<f32>,
     discharge_current: MinMax<f32>,
     current_sensor: MinMax<f32>,
@@ -67,7 +47,6 @@ pub struct Config {
 
 #[derive(Serialize, Deserialize, Debug)] // references only
 pub struct NetConfig {
-    name: ConfigName,
     pub dhcp: bool,
     pub ip: Option<String>,
     pub netmask: Option<String>,
@@ -84,7 +63,6 @@ impl NetConfig {
         dns: Option<String>,
     ) -> Self {
         Self {
-            name: ConfigName::NetConfig,
             dhcp,
             ip,
             netmask,
@@ -99,14 +77,13 @@ impl NetConfig {
             match self.create_config() {
                 Ok(config) => config,
                 Err(e) => {
-                    error!("Nvs data validitiy error {}", e);
+                    error!("Config validitiy error {}", e);
                     embassy_net::Config::dhcpv4(Default::default())
                 }
             }
         }
     }
     fn create_config(&self) -> Result<embassy_net::Config, StmError> {
-        use core::str::FromStr;
         let ipaddress = embassy_net::Ipv4Address::from_str(self.ip.as_ref().unwrap())
             .map_err(|_| StmError::InvalidIpDetails)?;
         let address = embassy_net::Ipv4Cidr::new(ipaddress, 24);
@@ -134,20 +111,150 @@ impl NetConfig {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)] // references only
+#[derive(Default)]
+pub struct MqttConfigBuilder {
+    // Fields for the builder
+    host: Option<String>,
+    port: Option<u16>,
+    client_id: Option<String>,
+    username: Option<String>,
+    password: Option<String>,
+    basetopic: Option<String>,
+    qos: u8,
+    retain: bool,
+    interval: u16,
+}
+
+impl MqttConfigBuilder {
+    // Initialize a new builder
+    pub fn new() -> Self {
+        Self {
+            interval: 10,
+            ..Default::default()
+        }
+    }
+
+    // Setter methods for each field
+    pub fn host(mut self, host: &str) -> Self {
+        self.host = Some(host.to_string());
+        self
+    }
+
+    pub fn port(mut self, port: u16) -> Self {
+        self.port = Some(port);
+        self
+    }
+
+    pub fn client_id(mut self, client_id: &str) -> Self {
+        self.client_id = Some(client_id.to_string());
+        self
+    }
+
+    pub fn username(mut self, username: &str) -> Self {
+        self.username = Some(username.to_string());
+        self
+    }
+
+    pub fn password(mut self, password: &str) -> Self {
+        self.password = Some(password.to_string());
+        self
+    }
+
+    pub fn basetopic(mut self, basetopic: &str) -> Self {
+        self.basetopic = Some(basetopic.to_string());
+        self
+    }
+
+    pub fn qos(mut self, qos: u8) -> Self {
+        self.qos = qos;
+        self
+    }
+
+    pub fn retain(mut self, retain: bool) -> Self {
+        self.retain = retain;
+        self
+    }
+
+    pub fn interval(mut self, interval: u16) -> Self {
+        self.interval = interval;
+        self
+    }
+
+    // Build the MqttConfig
+    pub fn build(self) -> MqttConfig {
+        MqttConfig {
+            host: self.host,
+            port: self.port,
+            client_id: self.client_id,
+            username: self.username,
+            password: self.password,
+            basetopic: self.basetopic,
+            qos: self.qos,
+            retain: self.retain,
+            interval: self.interval,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)] // references only
 pub struct MqttConfig {
-    name: ConfigName,
-    pub host: Option<String>,
-    pub port: Option<u16>,
-    pub client_id: Option<String>,
-    pub username: Option<String>,
-    pub password: Option<String>,
-    pub basetopic: Option<String>,
+    host: Option<String>,
+    port: Option<u16>,
+    client_id: Option<String>,
+    username: Option<String>,
+    password: Option<String>,
+    basetopic: Option<String>,
     pub qos: u8,
     pub retain: bool,
     pub interval: u16,
 }
 
+impl MqttConfig {
+    pub fn builder() -> MqttConfigBuilder {
+        MqttConfigBuilder::new()
+    }
+
+    pub fn get_config(&self) -> &MqttConfig {
+        self
+    }
+    pub fn get_username(&self) -> &str {
+        self.username.as_ref().unwrap()
+    }
+    pub fn get_password(&self) -> &str {
+        self.password.as_ref().unwrap()
+    }
+    pub fn get_qos(&self) -> u8 {
+        self.qos
+    }
+    pub fn get_retain(&self) -> bool {
+        self.retain
+    }
+    pub fn get_interval(&self) -> u16 {
+        self.interval
+    }
+    pub fn get_topic(&self) -> &str {
+        self.basetopic.as_ref().unwrap()
+    }
+}
+
+impl TryFrom<&MqttConfig> for SocketAddr {
+    type Error = StmError;
+
+    fn try_from(conf: &MqttConfig) -> Result<Self, Self::Error> {
+        if conf.host.is_none() {
+            return Err(StmError::BadMqttIp);
+        };
+        if conf.port.is_none() {
+            return Err(StmError::BadMqttPort);
+        }
+
+        let ip =
+            Ipv4Addr::from_str(conf.host.as_ref().unwrap()).map_err(|_| StmError::BadMqttIp)?;
+        Ok(SocketAddr::V4(SocketAddrV4::new(ip, conf.port.unwrap())))
+    }
+}
+
+/*
 impl MqttConfig {
     pub fn new(
         host: Option<String>,
@@ -177,24 +284,16 @@ impl MqttConfig {
         self
     }
 }
-
-pub trait NvsTrait
-where
-    Self: Serialize + Deserialize + Default,
-{
-    fn to_nvs(&self) -> Result<(), StmError>;
-    fn from_nvs(&self) -> Option<Self>;
-}
-
+*/
 pub trait JsonTrait
 where
-    Self: Serialize + Deserialize + ConfigTrait,
+    Self: Serialize + Deserialize,
 {
-    fn from_json(&mut self, slice: &[u8]) -> Result<(), StmError> {
+    fn decode_from_json(&mut self, slice: &[u8]) -> Result<(), StmError> {
         *self = json::from_str::<Self>(
             core::str::from_utf8(slice).map_err(|_e| StmError::InvalidConfigData)?,
         )
-        .map_err(|_e| StmError::ConfigDeserializeError(self.get_name()))?;
+        .map_err(|_e| StmError::ConfigDeserializeError)?;
         Ok(())
     }
 
@@ -206,26 +305,6 @@ where
 impl JsonTrait for Config {}
 impl JsonTrait for MqttConfig {}
 impl JsonTrait for NetConfig {}
-
-pub trait ConfigTrait {
-    fn get_name(&self) -> ConfigName;
-}
-
-impl ConfigTrait for Config {
-    fn get_name(&self) -> ConfigName {
-        self.name
-    }
-}
-impl ConfigTrait for NetConfig {
-    fn get_name(&self) -> ConfigName {
-        self.name
-    }
-}
-impl ConfigTrait for MqttConfig {
-    fn get_name(&self) -> ConfigName {
-        self.name
-    }
-}
 
 impl Config {
     pub fn pack_volts(&self) -> &MinMax<f32> {
@@ -268,7 +347,6 @@ impl From<&Config> for bms_standard::Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            name: ConfigName::Config,
             charge_current: MinMax::new(0.0, 200.0),
             discharge_current: MinMax::new(0.0, 200.0),
             current_sensor: MinMax::new(-40.0, 40.0),

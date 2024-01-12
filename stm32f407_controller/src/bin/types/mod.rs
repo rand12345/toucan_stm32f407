@@ -29,5 +29,3 @@ pub type StackType = &'static Stack<EthDevice>;
 pub type RS485<'a> = Uart<'a, USART2, DMA1_CH6, DMA1_CH5>;
 pub type RS232<'a> = Uart<'a, USART1, DMA2_CH0, DMA2_CH1>;
 pub type Usart6Type<'a> = Uart<'a, USART6, DMA2_CH7, DMA2_CH2>;
-
-pub mod messagebus;

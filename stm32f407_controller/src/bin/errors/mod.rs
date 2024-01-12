@@ -1,11 +1,9 @@
 use defmt::Format;
 
-use crate::config::ConfigName;
-
 #[derive(Debug, Format)]
 pub enum StmError {
     InvalidConfigData,
-    ConfigDeserializeError(ConfigName),
+    ConfigDeserializeError,
     FileNotFound,
     InvalidFileName,
     InvalidHttpRequest,
@@ -19,8 +17,8 @@ impl core::fmt::Display for StmError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             StmError::InvalidConfigData => write!(f, "Invalid config data"),
-            StmError::ConfigDeserializeError(cfg_name) => {
-                write!(f, "Error deserializing {:?} config", cfg_name)
+            StmError::ConfigDeserializeError => {
+                write!(f, "Error deserializing config")
             }
             StmError::FileNotFound => write!(f, "File not found"),
             StmError::InvalidFileName => write!(f, "Bad filename"),

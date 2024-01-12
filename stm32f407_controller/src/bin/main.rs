@@ -38,8 +38,7 @@ use {defmt_rtt as _, panic_probe as _};
 pub mod config;
 mod errors;
 mod hal;
-#[cfg(feature = "nvs")]
-mod nvs;
+
 mod statics;
 mod tasks;
 mod types;
@@ -102,7 +101,7 @@ async fn main(spawner: Spawner) -> () {
 
     */
 
-    #[cfg(feature = "v65")] // MOVE TO NVS
+    #[cfg(feature = "v65")]
     {
         // modify default config for Bms
         let mut bms = crate::statics::BMS.lock().await;
