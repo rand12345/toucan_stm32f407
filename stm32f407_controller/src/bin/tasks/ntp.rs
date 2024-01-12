@@ -1,8 +1,7 @@
-use core::str::FromStr;
-
+use crate::types::StackType;
 use chrono::{DateTime as ChronoDateTime, NaiveDateTime, TimeZone};
 use chrono_tz::Tz;
-
+use core::str::FromStr;
 use defmt::{error, info, warn, Debug2Format, Format};
 use dotenvy_macro::dotenv;
 use embassy_net::{
@@ -10,14 +9,9 @@ use embassy_net::{
     IpAddress, IpEndpoint, Ipv4Address,
 };
 use embassy_stm32::rtc::{DateTime, Rtc};
-
+const TZ: Tz = chrono_tz::Europe::London;
 use no_std_net::{SocketAddr, ToSocketAddrs};
 use sntpc::{NtpContext, NtpResult, NtpTimestampGenerator};
-
-use crate::types::StackType;
-
-// const POOL_NTP_ADDR: Ipv4Address = Ipv4Address::new(10, 0, 1, 72);
-const TZ: Tz = chrono_tz::Europe::London;
 
 #[derive(Debug, Format)]
 pub enum NtpError {
@@ -70,8 +64,13 @@ impl TryFrom<NtpResult> for Time {
     }
 }
 
+#[cfg(feature = "ntp")]
 #[embassy_executor::task]
 pub async fn ntp_task(stack: StackType, mut rtc: Rtc) {
+    // use chrono::Utc;
+
+    use crate::statics::UTC_NOW;
+
     let rtc_now = rtc.now().unwrap_or(NaiveDateTime::MIN.into());
     let ntp_cfg_ip = dotenv!("ntp");
     if ntp_cfg_ip.is_empty() {
@@ -90,8 +89,9 @@ pub async fn ntp_task(stack: StackType, mut rtc: Rtc) {
             &mut tx_meta,
             &mut tx_buffer,
         );
-
-        let ntp_context = NtpContext::new(StdTimestampGen::new(rtc_now));
+        let stddt = StdTimestampGen::from(rtc_now);
+        warn!("Sending this to NTP: {:?}", Debug2Format(&stddt.datetime));
+        let ntp_context = NtpContext::new(stddt);
 
         let endpoint = {
             let (ntp_ip, port) = ntp_cfg_ip.rsplit_once(':').expect("Bad NTP ip:port");
@@ -108,12 +108,9 @@ pub async fn ntp_task(stack: StackType, mut rtc: Rtc) {
         let result = sntpc::get_time(ntpsocket.0.socketaddress, &ntpsocket, ntp_context).await;
         let new_rtc_time: Option<NaiveDateTime> = match result {
             Ok(time) => match Time::try_from(time) {
-                Ok(local_time) => {
-                    info!("Got NTP time: {}", Debug2Format(&local_time));
-                    EpochTime::from(local_time).get_datetime()
-                }
-                Err(err) => {
-                    error!("NTP time conversion failed with {:?}", Debug2Format(&err));
+                Ok(local_time) => EpochTime::from(local_time).get_datetime(),
+                Err(_) => {
+                    error!("NTP time conversion failed with parse error");
                     None
                 }
             },
@@ -124,34 +121,47 @@ pub async fn ntp_task(stack: StackType, mut rtc: Rtc) {
         };
 
         if let Some(ntp_time) = new_rtc_time {
+            // let mut rtc = rtc.lock().await;
             let _ = rtc.set_datetime(ntp_time.into());
+            print_time(&rtc);
         }
     };
 
+    let mut tick = embassy_time::Ticker::every(embassy_time::Duration::from_secs(1));
     loop {
+        // ("%Y-%m-%dT%H:%M:%S.%fZ"
+        tick.next().await;
         if let Ok(now) = rtc.now() {
-            info!(
-                "RTC: {}/{}/{} {}:{}:{}",
-                now.year(),
-                now.month(),
-                now.day(),
-                now.hour(),
-                now.minute(),
-                now.second(),
-            );
-        }
-        // try update
-        embassy_time::Timer::after(embassy_time::Duration::from_secs(60 * 60 * 24)).await;
+            UTC_NOW.signal(now)
+        };
+        // embassy_time::Timer::after(embassy_time::Duration::from_secs(60 * 60)).await;
+
+        // print_time(&rtc);
+        // try update call here
     }
 }
 
-#[derive(Copy, Clone)]
-struct StdTimestampGen {
-    datetime: NaiveDateTime,
+fn print_time(rtc: &Rtc) {
+    if let Ok(now) = rtc.now() {
+        info!(
+            "RTC: {}/{}/{} {}:{}:{}",
+            now.year(),
+            now.month(),
+            now.day(),
+            now.hour(),
+            now.minute(),
+            now.second(),
+        );
+    }
 }
 
-impl StdTimestampGen {
-    fn new(rtc: DateTime) -> Self {
+#[derive(Copy, Clone, Debug)]
+struct StdTimestampGen {
+    pub datetime: NaiveDateTime,
+}
+
+impl From<DateTime> for StdTimestampGen {
+    fn from(rtc: DateTime) -> Self {
         Self {
             datetime: rtc.into(),
         }
@@ -161,9 +171,14 @@ impl StdTimestampGen {
 impl NtpTimestampGenerator for StdTimestampGen {
     fn init(&mut self) {}
     fn timestamp_sec(&self) -> u64 {
+        warn!("timestamp_sec: {}", self.datetime.timestamp() as u64);
         self.datetime.timestamp() as u64
     }
     fn timestamp_subsec_micros(&self) -> u32 {
+        warn!(
+            "timestamp_subsec_micros: {}",
+            self.datetime.timestamp_micros() as u32
+        );
         self.datetime.timestamp_micros() as u32
     }
 }

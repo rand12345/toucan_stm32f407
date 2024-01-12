@@ -62,6 +62,7 @@ pub async fn inverter_rx() -> ! {
                 for frame in frames {
                     sender.send(frame).await;
                 }
+                #[cfg(feature = "mqtt")]
                 SEND_MQTT.signal(true);
                 true
             }

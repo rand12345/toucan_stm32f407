@@ -1,6 +1,7 @@
+#[cfg(feature = "mqtt")]
+use crate::tasks::mqtt::MqttFormat;
 use crate::{
     config::{Config, GlobalState, MqttConfig, NetConfig},
-    tasks::mqtt::MqttFormat,
     types::*,
 };
 use embassy_sync::{channel::Channel, mutex::Mutex, signal::Signal};
@@ -11,23 +12,30 @@ pub static INVERTER_CHANNEL_TX: InverterChannelTx = Channel::new();
 pub static BMS_CHANNEL_RX: BmsChannelRx = Channel::new();
 pub static BMS_CHANNEL_TX: BmsChannelTx = Channel::new();
 pub static CAN_READY: Status = Signal::new();
-#[cfg(feature = "nvs")]
-pub static NVS_READY: Status = Signal::new();
+
 pub static LAST_BMS_MESSAGE: Elapsed = Mutex::new(None);
 pub static WDT: Status = Signal::new();
 pub static CONTACTOR_STATE: Status = Signal::new();
+#[cfg(feature = "mqtt")]
 pub static SEND_MQTT: Status = Signal::new();
 pub static LED_COMMAND: LedCommandType = Signal::new();
+
+pub static UTC_NOW: EpochType = Signal::new();
 // #[cfg(any(feature = "ze40"))]
 
 lazy_static! {
     // thin this down - use singletons from main?
     pub static ref NETCONFIG: MutexType<NetConfig> = Mutex::new(NetConfig::new(true, None, None, None, None));
     pub static ref MQTTCONFIG: MutexType<MqttConfig> = Mutex::new(MqttConfig::default());
-    pub static ref MQTTFMT: MutexType<MqttFormat> = Mutex::new(MqttFormat::default());
+
+
     pub static ref CONFIG: MutexType<Config> = Mutex::new(Config::default());
     pub static ref GLOBALSTATE: MutexType<GlobalState> = Mutex::new(GlobalState::default());
     pub static ref BMS: MutexType<bms_standard::Bms> = Mutex::new(bms_standard::Bms::new(bms_standard::Config::default()));
+}
+#[cfg(feature = "mqtt")]
+lazy_static! {
+    pub static ref MQTTFMT: MutexType<MqttFormat> = Mutex::new(MqttFormat::default());
 }
 
 // pub const BITTIMINGS: u32 = 0x001a0005;

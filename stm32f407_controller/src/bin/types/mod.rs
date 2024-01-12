@@ -22,6 +22,7 @@ pub type Elapsed = Mutex<_Mutex, Option<Instant>>;
 pub type MutexType<T> = embassy_sync::mutex::Mutex<_Mutex, T>;
 pub type Status = Signal<_Mutex, bool>;
 pub type LedCommandType = Signal<_Mutex, crate::tasks::leds::LedCommand>;
+pub type EpochType = Signal<_Mutex, embassy_stm32::rtc::DateTime>;
 
 pub type EthDevice = Ethernet<'static, ETH, GenericSMI>;
 pub type StackType = &'static Stack<EthDevice>;

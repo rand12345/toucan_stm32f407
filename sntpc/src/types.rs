@@ -3,9 +3,8 @@ use core::fmt::{Debug, Display};
 use core::mem;
 
 #[cfg(feature = "defmt")]
-use defmt::Format;
-#[cfg(feature = "log")]
-use log::debug;
+use defmt::debug;
+
 
 use crate::get_ntp_timestamp;
 use crate::net;
@@ -91,6 +90,10 @@ impl Display for Units {
         write!(f, "{}", unit)
     }
 }
+//16810780466156307181
+//16810780466156307181
+//16810771802321569730
+
 
 /// The error type for SNTP client
 /// Errors originate on network layer or during processing response from a NTP server
@@ -211,8 +214,8 @@ impl NtpPacket {
         timestamp_gen.init();
         let tx_timestamp = get_ntp_timestamp(timestamp_gen);
 
-        #[cfg(feature = "log")]
-        debug!(target: "NtpPacket::new", "{}", tx_timestamp);
+        #[cfg(feature = "defmt")]
+        debug!("Target NtpPacket::new {}", tx_timestamp);
 
         NtpPacket {
             li_vn_mode: NtpPacket::SNTP_CLIENT_MODE | NtpPacket::SNTP_VERSION,
@@ -346,7 +349,7 @@ impl NtpUdpSocket for net::UdpSocket {
 
 /// SNTP client context that contains of objects that may be required for client's
 /// operation
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct NtpContext<T: NtpTimestampGenerator> {
     pub timestamp_gen: T,
 }

@@ -20,7 +20,7 @@
                 {
                     "coreIndex": 0,
                     "programBinary": "target/thumbv7em-none-eabi/release/main", //!MODIFY
-                    "svdFile": "svd" //!MODIFY
+                    // "svdFile": "svd" //!MODIFY
                 }
             ],
             "env": {

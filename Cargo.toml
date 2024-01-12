@@ -63,6 +63,10 @@ pylontech_protocol = {git = "ssh://git@github.com/rand12345/toucan_controller.gi
 byd_protocol = {git = "ssh://git@github.com/rand12345/toucan_controller.git", features = ["v65"]}
 bms_standard = {git = "ssh://git@github.com/rand12345/toucan_controller.git"}
 
+defmt = { version = "0.3" }
+no-std-net = {version = "0.6.0"}
+heapless = {version = "0.8.0", default-features = false}
+
 [patch.crates-io]
 ze40_bms = {git = "ssh://git@github.com/rand12345/toucan_controller.git"}
 ze50_bms = {git = "ssh://git@github.com/rand12345/toucan_controller.git"}

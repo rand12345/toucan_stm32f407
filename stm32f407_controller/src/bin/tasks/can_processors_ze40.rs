@@ -1,6 +1,7 @@
+#[cfg(feature = "mqtt")]
 use super::mqtt::MqttFormat;
 use crate::statics::*;
-use bms_standard::Bms;
+
 use defmt::{error, warn};
 use embassy_stm32::can::bxcan::Frame;
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex as _Mutex;
@@ -121,8 +122,6 @@ pub async fn bms_rx() {
                 };
                 if let Err(e) = update() {
                     error!("Rapid data update error: {}", e)
-                } else {
-                    // push_all_to_mqtt(bmsdata).await;
                 };
             }
         } else {
@@ -168,6 +167,7 @@ pub async fn bms_rx() {
                             bmsdata.get_balancing_cells(),
                             bmsdata.soc
                         );
+                        #[cfg(feature = "mqtt")]
                         push_all_to_mqtt(*bmsdata);
                         Ok(())
                     };
@@ -214,8 +214,8 @@ fn x445_signal(frame: Frame, faa: &mut u8, f55: &mut u8) {
     };
 }
 
-#[inline]
-fn push_all_to_mqtt(bms: Bms) {
+#[cfg(feature = "mqtt")]
+fn push_all_to_mqtt(bms: bms_standard::Bms) {
     // let bms = BMS.lock().await;
     if let Ok(mut lock) = MQTTFMT.try_lock() {
         *lock = MqttFormat::from(bms)

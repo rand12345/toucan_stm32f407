@@ -10,7 +10,7 @@ categories = ["date-and-time", "no-std", "embedded"]
 keywords = ["sntp", "ntp", "sntp-client", "ntp-client"]
 license = "BSD-3-Clause"
 authors = ["Vladimir Petrigo <vladimir.petrigo@gmail.com>"]
-edition = "2018"
+edition = "2021"
 autoexamples = false
 
 exclude = [
@@ -26,8 +26,10 @@ std = []
 utils = ["std", "chrono/clock"]
 
 [dependencies]
-log = { version = "~0.4", optional = true }
-defmt = { version = "0.3", optional = true }
+# log = { version = "~0.4", optional = true }
+# defmt = { version = "0.3", optional = true }
+defmt = {workspace = true, optional = true}
+
 chrono = { version = "~0.4", default-features = false, optional = true }
 # requred till this https://github.com/rust-lang/rfcs/pull/2832 is not addressed
 no-std-net = "~0.6"

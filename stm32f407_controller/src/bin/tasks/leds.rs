@@ -21,6 +21,7 @@ pub enum LedCommand {
     Toggle(Led),
 }
 
+#[allow(dead_code)]
 pub enum Led {
     Led1,
     Led2,

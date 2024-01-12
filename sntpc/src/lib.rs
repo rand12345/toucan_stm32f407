@@ -120,8 +120,10 @@ pub(crate) mod net {
     pub use std::net::{SocketAddr, ToSocketAddrs, UdpSocket};
 }
 
+
 #[cfg(all(feature = "log", not(feature="defmt")))]
 use log::debug;
+
 #[cfg(feature = "defmt")]
 use defmt::{debug,Debug2Format};
 
@@ -223,7 +225,7 @@ pub async fn get_time<'a,A, U, T>(
 where
     A: net::ToSocketAddrs + Copy + Debug,
     U: NtpUdpSocket<'a> + Debug + 'a,
-    T: NtpTimestampGenerator + Copy,
+    T: NtpTimestampGenerator + Copy + Debug,
 {
     let result = sntp_send_request(pool_addrs, socket, context).await?;
     sntp_process_response(pool_addrs, socket, context, result).await
@@ -339,10 +341,10 @@ pub async fn sntp_send_request<'a,A,U, T>(
 where
     A: net::ToSocketAddrs + Debug,
     U: NtpUdpSocket<'a> + Debug,
-    T: NtpTimestampGenerator + Copy,
+    T: NtpTimestampGenerator + Copy + Debug,
 {
-    #[cfg(feature = "log")]
-    debug!("Address: {:?}, Socket: {:?}", Debug2Format(&dest), Debug2Format(&*socket));
+    #[cfg(feature = "defmt")]
+    debug!("Address: {:?}, Socket: {:?}, TimeStampGen: {:?}", Debug2Format(&dest), Debug2Format(&socket), Debug2Format(&context.timestamp_gen));
     let request = NtpPacket::new(context.timestamp_gen);
 
     send_request(dest, &request, socket).await?;
@@ -453,8 +455,6 @@ where
     let (response, src) = socket.recv_from(response_buf.0.as_mut()).await?;
     context.timestamp_gen.init();
     let recv_timestamp = get_ntp_timestamp(context.timestamp_gen);
-    #[cfg(feature = "log")]
-    debug!("Response: {}", response);
 
     match dest.to_socket_addrs() {
         Err(_) => return Err(Error::AddressResolve),
@@ -474,7 +474,7 @@ where
 
     if let Ok(_r) = &result {
         #[cfg(feature = "log")]
-        debug!("{:?}", Debug2Format(&_r));
+        debug!("{:?}", defmt::Debug2Format(&_r));
     }
 
     result
@@ -510,10 +510,12 @@ fn process_response(
     let mut packet = NtpPacket::from(resp);
 
     convert_from_network(&mut packet);
-    #[cfg(feature = "log")]
+    #[cfg(feature = "defmt")]
     debug_ntp_packet(&packet, recv_timestamp);
 
     if send_req_result.originate_timestamp != packet.origin_timestamp {
+        #[cfg(feature = "defmt")]
+        debug!(" send_req_result.originate_timestamp {} != packet.origin_timestamp {}", send_req_result.originate_timestamp , packet.origin_timestamp );
         return Err(Error::IncorrectOriginTimestamp);
     }
     // Shift is 0
@@ -556,7 +558,7 @@ fn process_response(
     let offset = offset_calculate(t1, t2, t3, t4, units);
     let timestamp = NtpTimestamp::from(packet.tx_timestamp);
 
-    #[cfg(feature = "log")]
+    #[cfg(feature = "defmt")]
     debug!(
         "Roundtrip delay: {} {}. Offset: {} {}",
         Debug2Format(&roundtrip), Debug2Format(&units), Debug2Format(&offset), Debug2Format(&units)
@@ -636,7 +638,7 @@ fn offset_calculate(t1: u64, t2: u64, t3: u64, t4: u64, units: Units) -> i64 {
     }
 }
 
-#[cfg(feature = "log")]
+#[cfg(feature = "defmt")]
 fn debug_ntp_packet(packet: &NtpPacket, _recv_timestamp: u64) {
     let mode = shifter(packet.li_vn_mode, MODE_MASK, MODE_SHIFT);
     let version = shifter(packet.li_vn_mode, VERSION_MASK, VERSION_SHIFT);

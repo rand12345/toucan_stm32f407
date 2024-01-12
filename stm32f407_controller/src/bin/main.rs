@@ -5,9 +5,12 @@
 #![feature(async_closure)]
 #![feature(iter_array_chunks)]
 extern crate alloc;
-use defmt::*;
+
+use defmt::{debug, info, unwrap};
 use embassy_executor::*;
 use embassy_net::{Stack, StackResources};
+#[cfg(feature = "ntp")]
+use embassy_stm32::rtc::{Rtc, RtcConfig};
 use embassy_stm32::{
     gpio::{Level, Output, Speed},
     peripherals::ETH,
@@ -15,6 +18,9 @@ use embassy_stm32::{
 use embedded_alloc::Heap;
 use hal::*;
 use static_cell::StaticCell;
+
+#[cfg(feature = "syslog")]
+use syslog_emb::{SyslogMessage, SyslogSocket};
 
 #[cfg(feature = "tesla_m3")]
 use crate::tasks::can_processors_tesla_m3::*;
@@ -46,7 +52,7 @@ mod utils;
 mod wdt;
 mod web;
 
-pub const MAC_ADDR: [u8; 6] = [0x00, 0x00, 0xDE, 0xAD, 0xBE, 0xEF]; // prod_device
+pub const MAC_ADDR: [u8; 6] = [0x00, 0x01, 0xDE, 0xAD, 0xBE, 0xEF]; // prod_device
                                                                     // const MAC_ADDR: [u8; 6] = [0x00, 0x01, 0xDE, 0xAD, 0xBE, 0xEF];  // test_device
 
 #[embassy_executor::main]
@@ -71,7 +77,7 @@ async fn main(spawner: Spawner) -> () {
     info!("Leds task initialized");
 
     // UARTS
-
+    #[cfg(feature = "modbus_gateway")]
     let rs485 = rs485(p.USART2, p.PD6, p.PD5, p.DMA1_CH6, p.DMA1_CH5);
 
     let can1 = can1(p.CAN1, p.PD0, p.PD1);
@@ -153,7 +159,7 @@ async fn main(spawner: Spawner) -> () {
     defmt::unwrap!(spawner.spawn(inverter_rx()));
     defmt::unwrap!(spawner.spawn(bms_tx_periodic()));
 
-    // // always start can 1 first
+    // always start can 1 first
 
     defmt::unwrap!(spawner.spawn(crate::tasks::can_interfaces::bms_task(can1, 500_000)));
     defmt::unwrap!(spawner.spawn(crate::tasks::can_interfaces::inverter_task(can2, 500_000)));
@@ -165,22 +171,22 @@ async fn main(spawner: Spawner) -> () {
     stack.wait_config_up().await;
     info!("Network is up");
 
-    #[cfg(not(feature = "tcp_debug"))]
+    #[cfg(all(not(feature = "tcp_debug"), feature = "http"))]
     unwrap!(spawner.spawn(web::http::http_net_task(stack)));
-    embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
 
-    #[cfg(feature = "ntp")]
-    use embassy_stm32::rtc::{Rtc, RtcConfig};
     #[cfg(feature = "ntp")]
     let rtc = Rtc::new(p.RTC, RtcConfig::default());
     #[cfg(feature = "ntp")]
     unwrap!(spawner.spawn(tasks::ntp::ntp_task(stack, rtc)));
 
-    #[cfg(feature = "tcp_debug")]
+    #[cfg(all(feature = "tcp_debug", not(feature = "http")))]
     unwrap!(spawner.spawn(tasks::tcp_debug::debug_task(stack)));
-
+    #[cfg(feature = "mqtt")]
     unwrap!(spawner.spawn(tasks::mqtt::mqtt_net_task(stack)));
+
+    #[cfg(feature = "modbus_bridge")]
     unwrap!(spawner.spawn(tasks::modbus::modbus_task(stack, rs485, p.PD7)));
+
     loop {
         debug!("Heap free: {} used: {}", HEAP.free(), HEAP.used());
         embassy_time::Timer::after(embassy_time::Duration::from_secs(10)).await;

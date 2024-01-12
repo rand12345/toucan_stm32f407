@@ -15,9 +15,12 @@ name = "integration"
 harness = false
 
 [features]
-default = ["defmt", "ze40", "foxess", "tcp_debug", "ntp"] 
+default = ["defmt", "ze40", "foxess", "ntp"] #, "mqtt", "tcp_debug"  "modbus_bridge",] 
  
-ntp = ["dep:sntpc", "no-std-net", "dep:chrono"]
+mqtt = []
+ntp = ["dep:sntpc", "dep:chrono", "chrono-tz"]
+http = ["dep:httparse"]
+modbus_bridge = ["dep:crc16"]
 tcp_debug = []
 precharge = []
 v65 = []
@@ -31,13 +34,11 @@ foxess = ["dep:foxess_protocol"]
 solax = ["dep:solax_protocol"]
 
 [dependencies]
-
 cortex-m = { version = "0.7.6", features = ["inline-asm", "critical-section-single-core"] }
 cortex-m-rt = "0.7.0"
-defmt = { version = "0.3" }
+defmt = { workspace = true  }
 defmt-rtt = "0.4"
 panic-probe = { version = "0.3", features = ["print-defmt"] }
-embedded-io-async = { version = "0.6.0" }
 
 embassy-stm32.workspace = true
 embassy-sync.workspace = true
@@ -53,26 +54,36 @@ futures = { version = "0.3.17", default-features = false, features = [
 static_cell = "2"
 
 
-embedded-alloc = "0.5.0"
-heapless = { version = "0.8", default-features = false }
+embedded-io-async = { version = "0.6.0" }
+embedded-alloc = "0.5.0"  # needed for miniserde
+
+heapless = { workspace  = true }
 lazy_static = { version = "1", default-features = false, features = [
     "spin_no_std",
 ] }
 
 embedded-hal = "0.2.7"
-rand_core = {version = "0.6.4", default-features = false}
-rust-mqtt = {path = "../rust-mqtt", default-features = false, features = ["no_std"]}
 embedded-nal-async = { version = "0.7.1" }
-miniserde = {version = "^0", default-features = false}
-httparse = {version = "1", default-features = false}  # to be removed
 
-crc16 = "0"
+# mqtt
+rust-mqtt = {path = "../rust-mqtt", default-features = false, features = ["no_std"]}
+miniserde = {version = "^0", default-features = false}
+
+#http
+httparse = { version = "1", default-features = false, optional = true } 
+# rand_core = {version = "0.6.4", default-features = false}
+
+# modbus bridge
+crc16 = { version = "0.4.0", optional = true }
+
 dotenvy_macro = "0.15.7"
 
+no-std-net = {workspace = true}
+
+# NTP
 sntpc = {path = "../sntpc", optional = true, default-features = false}
-no-std-net = {version = "0.6.0", optional = true}
-chrono = { version = "^0.4", optional = true, default-features = false}
-chrono-tz = { version = "0.8.5", default-features = false}
+chrono = { version = "0.4", optional = true, default-features = false}
+chrono-tz = { version = "0.8.5", optional = true, default-features = false}
 
 
 [dependencies.ze40_bms]
@@ -105,6 +116,9 @@ optional = true
 
 [dependencies.bms_standard]
 workspace = true
+
+[dependencies.syslog-emb]
+path = "../syslog-emb/" 
 
 [dev-dependencies]
 defmt-test = "0.3.0"

@@ -34,7 +34,10 @@ pub mod can_processors_tesla_m3;
 
 pub mod leds;
 
+#[cfg(feature = "modbus_bridge")]
 pub mod modbus;
+
+#[cfg(feature = "mqtt")]
 pub mod mqtt;
 
 #[cfg(feature = "ntp")]
@@ -125,23 +128,3 @@ pub async fn contactor_both_task(pre: PA4, main: PA6, timer: TIM3) {
         }
     }
 }
-
-// #[embassy_executor::task]
-// pub async fn init(instance: IWDG, timeout_us: u32) {
-//     use crate::statics::WDT;
-//     use embassy_stm32::wdg::IndependentWatchdog;
-//     let mut wdt = IndependentWatchdog::new(instance, timeout_us); // 1sec
-//     unsafe {
-//         wdt.unleash();
-//     }
-//     info!("Watchdog started");
-//     loop {
-//         // await a signal and pet the dog, timeout triggers device reset
-//         let signal = WDT.wait().await;
-//         if signal {
-//             unsafe {
-//                 wdt.pet();
-//             }
-//         }
-//     }
-// }
