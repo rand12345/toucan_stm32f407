@@ -70,14 +70,7 @@ pub async fn bms_tx_periodic() {
     loop {
         for data in arrays {
             tx_interval.next().await;
-
-            // sender(frame_builder(
-            //     0x221,
-            //     // &[0x41, 0x11, 0x01, 0x00, 0x00, 0x00, 0x20, 0x96],
-            // 0x41 0x11 0x01 0x00 0x00 0x00 0x20 0x96
-            //     // &[0x41, 0x01, 0x05, 0x00, 0x00, 0x00, 0x60, 0xCA],
-            //     &data,
-            // ));
+            sender(frame_builder(0x221, &data));
         }
 
         continue;
@@ -143,7 +136,7 @@ pub async fn bms_rx() {
     let mut contactor_command = ContactorState::Precharge;
     let mut precharge_triggered: Option<Instant> = None;
     loop {
-        let frame: Frame = rx.recv().await;
+        let frame: Frame = rx.receive().await;
         let update = match data.decode_frame(frame) {
             Ok(update) => update,
             Err(e) => {

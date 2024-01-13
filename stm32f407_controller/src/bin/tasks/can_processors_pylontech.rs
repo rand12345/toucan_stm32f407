@@ -51,6 +51,7 @@ pub async fn inverter_rx() -> ! {
             trans.send(frame).await;
         }
         CONTACTOR_STATE.signal(inverter_comms_valid);
+        #[cfg(feature = "mqtt")]
         SEND_MQTT.signal(true);
     }
 }

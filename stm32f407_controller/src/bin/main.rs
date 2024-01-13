@@ -6,11 +6,10 @@
 #![feature(iter_array_chunks)]
 extern crate alloc;
 
+use crate::types::EthDevice;
 use defmt::{debug, info, unwrap};
 use embassy_executor::*;
 use embassy_net::{Stack, StackResources};
-#[cfg(feature = "ntp")]
-use embassy_stm32::rtc::{Rtc, RtcConfig};
 use embassy_stm32::{
     gpio::{Level, Output, Speed},
     peripherals::ETH,
@@ -19,44 +18,42 @@ use embedded_alloc::Heap;
 use hal::*;
 use static_cell::StaticCell;
 
-#[cfg(feature = "syslog")]
-use syslog_emb::{SyslogMessage, SyslogSocket};
-
+#[cfg(any(feature = "pylontech", feature = "byd"))]
+use crate::tasks::can_processors_pylontech::*;
+#[cfg(any(feature = "foxess", feature = "solax"))]
+use crate::tasks::can_processors_solax::*;
 #[cfg(feature = "tesla_m3")]
 use crate::tasks::can_processors_tesla_m3::*;
 #[cfg(feature = "ze40")]
 use crate::tasks::can_processors_ze40::*;
-
 #[cfg(feature = "ze50")]
 use crate::tasks::can_processors_ze50::*;
-
-#[cfg(any(feature = "foxess", feature = "solax"))]
-use crate::tasks::can_processors_solax::*;
-
-#[cfg(any(feature = "pylontech", feature = "byd"))]
-use crate::tasks::can_processors_pylontech::*;
-use crate::types::EthDevice;
-
-#[global_allocator]
-static HEAP: Heap = Heap::empty();
-use {defmt_rtt as _, panic_probe as _};
+#[cfg(feature = "ntp")]
+use embassy_stm32::rtc::{Rtc, RtcConfig};
+#[cfg(feature = "syslog")]
+use syslog_emb::{SyslogMessage, SyslogSocket};
 
 pub mod config;
 mod errors;
 mod hal;
-
 mod statics;
 mod tasks;
 mod types;
 mod utils;
+#[cfg(any(feature = "ze40", feature = "ze50", feature = "tesla_m3"))]
 mod wdt;
 mod web;
+
+#[global_allocator]
+static HEAP: Heap = Heap::empty();
+use {defmt_rtt as _, panic_probe as _};
 
 pub const MAC_ADDR: [u8; 6] = [0x00, 0x01, 0xDE, 0xAD, 0xBE, 0xEF]; // prod_device
                                                                     // const MAC_ADDR: [u8; 6] = [0x00, 0x01, 0xDE, 0xAD, 0xBE, 0xEF];  // test_device
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) -> () {
+    check_compile_features();
     let p = embassy_stm32::init(peripherals_config());
     info!("Init!");
 
@@ -155,10 +152,18 @@ async fn main(spawner: Spawner) -> () {
         )));
     }
 
+    #[cfg(any(feature = "ze40", feature = "ze50", feature = "tesla_m3"))]
     defmt::unwrap!(spawner.spawn(bms_rx()));
-    defmt::unwrap!(spawner.spawn(inverter_rx()));
-    defmt::unwrap!(spawner.spawn(bms_tx_periodic()));
-
+    #[cfg(any(
+        feature = "solax",
+        feature = "foxess",
+        feature = "byd",
+        feature = "pylontech"
+    ))]
+    {
+        defmt::unwrap!(spawner.spawn(inverter_rx()));
+        defmt::unwrap!(spawner.spawn(bms_tx_periodic()));
+    }
     // always start can 1 first
 
     defmt::unwrap!(spawner.spawn(crate::tasks::can_interfaces::bms_task(can1, 500_000)));
@@ -191,4 +196,19 @@ async fn main(spawner: Spawner) -> () {
         debug!("Heap free: {} used: {}", HEAP.free(), HEAP.used());
         embassy_time::Timer::after(embassy_time::Duration::from_secs(10)).await;
     }
+}
+
+fn check_compile_features() {
+    #[cfg(any(
+        all(feature = "ze40", feature = "ze50"),
+        all(feature = "ze40", feature = "tesla_m3"),
+        all(feature = "ze50", feature = "tesla_m3"),
+        all(feature = "solax", feature = "foxess"),
+        all(feature = "solax", feature = "byd"),
+        all(feature = "solax", feature = "pylontech"),
+        all(feature = "foxess", feature = "byd"),
+        all(feature = "foxess", feature = "pylontech"),
+        all(feature = "byd", feature = "pylontech")
+    ))]
+    compile_error!("Only one feature in each group can be enabled at a time.");
 }

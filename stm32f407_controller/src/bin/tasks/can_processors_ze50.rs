@@ -1,5 +1,4 @@
 use crate::statics::*;
-use bms_standard::Bms;
 use defmt::{error, info, warn, Debug2Format};
 use embassy_sync::blocking_mutex::raw::ThreadModeRawMutex as _Mutex;
 use embassy_sync::mutex::Mutex;
@@ -64,6 +63,7 @@ async fn update() {
                 bmsdata.get_balancing_cells(),
                 _soc
             );
+            #[cfg(feature = "mqtt")]
             push_all_to_mqtt(*bmsdata);
             Ok(())
         };
@@ -181,6 +181,7 @@ pub async fn bms_rx() {
     }
 }
 
+#[cfg(feature = "mqtt")]
 #[inline]
 fn push_all_to_mqtt(bms: Bms) {
     // let bms = BMS.lock().await;

@@ -13,13 +13,16 @@ pub static BMS_CHANNEL_RX: BmsChannelRx = Channel::new();
 pub static BMS_CHANNEL_TX: BmsChannelTx = Channel::new();
 pub static CAN_READY: Status = Signal::new();
 
+#[cfg(any(feature = "ze40", feature = "ze50", feature = "tesla_m3"))]
 pub static LAST_BMS_MESSAGE: Elapsed = Mutex::new(None);
+#[cfg(any(feature = "ze40", feature = "ze50", feature = "tesla_m3"))]
 pub static WDT: Status = Signal::new();
 pub static CONTACTOR_STATE: Status = Signal::new();
 #[cfg(feature = "mqtt")]
 pub static SEND_MQTT: Status = Signal::new();
 pub static LED_COMMAND: LedCommandType = Signal::new();
 
+#[cfg(feature = "ntp")]
 pub static UTC_NOW: EpochType = Signal::new();
 // #[cfg(any(feature = "ze40"))]
 
@@ -39,6 +42,7 @@ lazy_static! {
 }
 
 // pub const BITTIMINGS: u32 = 0x001a0005;
+#[cfg(any(feature = "ze40", feature = "ze50", feature = "tesla_m3"))]
 pub const LAST_READING_TIMEOUT_SECS: u64 = 10; // move to config
 
 #[macro_export]

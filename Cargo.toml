@@ -46,40 +46,40 @@ opt-level = 3
 overflow-checks = false  
 
 [workspace.dependencies]
-embassy-stm32 = { version = "0.1.0", git = "https://github.com/embassy-rs/embassy.git",rev = "0be9b059", features = [ "defmt", "stm32f407ve", "unstable-pac", "memory-x", "time-driver-any", "exti", "chrono"]  }
-embassy-sync = { version = "0.5.0", git = "https://github.com/embassy-rs/embassy.git",rev = "0be9b059", features = ["defmt"] }
-embassy-executor = { version = "0.4.0",git = "https://github.com/embassy-rs/embassy.git", rev = "0be9b059", features = ["arch-cortex-m", "executor-thread", "executor-interrupt", "defmt", "integrated-timers", "nightly"] }
-embassy-time = { version = "0.2",git = "https://github.com/embassy-rs/embassy.git", rev = "0be9b059", features = ["defmt", "defmt-timestamp-uptime", "tick-hz-32_768"] }
-embassy-usb = { version = "0.1.0", git = "https://github.com/embassy-rs/embassy.git", rev = "0be9b059",features = ["defmt" ] }
-embassy-net = { version = "0.2.0", git = "https://github.com/embassy-rs/embassy.git",rev = "0be9b059", features = ["defmt", "tcp", "udp", "dhcpv4", "medium-ethernet", "proto-ipv4"] }
-embassy-futures = { version = "^0" ,git = "https://github.com/embassy-rs/embassy.git",rev = "0be9b059"}
+embassy-stm32    = { version = "0.1.0", git = "https://github.com/embassy-rs/embassy.git", rev = "6ff0e4bcf5fbcccd8ae52cc83be7ed9f83b66fde", features = [ "defmt", "stm32f407ve", "unstable-pac", "memory-x", "time-driver-any", "exti", "chrono"]  }
+embassy-sync     = { version = "0.5.0", git = "https://github.com/embassy-rs/embassy.git", rev = "6ff0e4bcf5fbcccd8ae52cc83be7ed9f83b66fde", features = ["defmt"] }
+embassy-executor = { version = "0.5.0", git = "https://github.com/embassy-rs/embassy.git", rev = "6ff0e4bcf5fbcccd8ae52cc83be7ed9f83b66fde", features = ["arch-cortex-m", "executor-thread", "executor-interrupt", "defmt", "integrated-timers", "nightly"] }
+embassy-time     = { version = "0.3.0", git = "https://github.com/embassy-rs/embassy.git", rev = "6ff0e4bcf5fbcccd8ae52cc83be7ed9f83b66fde", features = ["defmt", "defmt-timestamp-uptime", "tick-hz-32_768"] }
+embassy-usb      = { version = "0.1.0", git = "https://github.com/embassy-rs/embassy.git", rev = "6ff0e4bcf5fbcccd8ae52cc83be7ed9f83b66fde", features = ["defmt" ] }
+embassy-net      = { version = "0.4.0", git = "https://github.com/embassy-rs/embassy.git", rev = "6ff0e4bcf5fbcccd8ae52cc83be7ed9f83b66fde", features = ["defmt", "tcp", "udp", "dhcpv4", "medium-ethernet", "proto-ipv4"] }
+embassy-futures  = { version = "^0" ,   git = "https://github.com/embassy-rs/embassy.git", rev = "6ff0e4bcf5fbcccd8ae52cc83be7ed9f83b66fde" }
 
-ze40_bms = {git = "ssh://git@github.com/rand12345/toucan_controller.git"}
-ze50_bms = {git = "ssh://git@github.com/rand12345/toucan_controller.git"}
-tesla_m3_bms = {git = "ssh://git@github.com/rand12345/toucan_controller.git", features = ["debug"]}
-foxess_protocol = {git = "ssh://git@github.com/rand12345/toucan_controller.git", features = ["defmt"]}
-solax_protocol = {git = "ssh://git@github.com/rand12345/toucan_controller.git",  features = ["defmt"]}
-pylontech_protocol = {git = "ssh://git@github.com/rand12345/toucan_controller.git" }
-byd_protocol = {git = "ssh://git@github.com/rand12345/toucan_controller.git", features = ["v65"]}
-bms_standard = {git = "ssh://git@github.com/rand12345/toucan_controller.git"}
+ze40_bms           = { git = "ssh://git@github.com/rand12345/toucan_controller.git" }
+tesla_m3_bms       = { git = "ssh://git@github.com/rand12345/toucan_controller.git", features = ["debug"] }
+foxess_protocol    = { git = "ssh://git@github.com/rand12345/toucan_controller.git", features = ["defmt"] }
+solax_protocol     = { git = "ssh://git@github.com/rand12345/toucan_controller.git", features = ["defmt"] }
+byd_protocol       = { git = "ssh://git@github.com/rand12345/toucan_controller.git", features = ["v65"] }
+pylontech_protocol = { git = "ssh://git@github.com/rand12345/toucan_controller.git" }
+bms_standard       = { git = "ssh://git@github.com/rand12345/toucan_controller.git" }
 
-defmt = { version = "0.3" }
-no-std-net = {version = "0.6.0"}
-heapless = {version = "0.8.0", default-features = false}
+defmt        = { version = "0.3" }
+no-std-net   = { version = "0.6.0" }
+heapless     = { version = "0.8.0", default-features = false }
+embedded-hal = "0.2.7"
 
 [patch.crates-io]
-ze40_bms = {git = "ssh://git@github.com/rand12345/toucan_controller.git"}
-ze50_bms = {git = "ssh://git@github.com/rand12345/toucan_controller.git"}
-tesla_m3_bms = {git = "ssh://git@github.com/rand12345/toucan_controller.git"}
-foxess_protocol = {git = "ssh://git@github.com/rand12345/toucan_controller.git"}
-solax_protocol = {git = "ssh://git@github.com/rand12345/toucan_controller.git"}
-pylontech_protocol = {git = "ssh://git@github.com/rand12345/toucan_controller.git"}
-byd_protocol = {git = "ssh://git@github.com/rand12345/toucan_controller.git"}
-bms_standard = {git = "ssh://git@github.com/rand12345/toucan_controller.git"}
+ze40_bms           = { git = "ssh://git@github.com/rand12345/toucan_controller.git" }
+ze50_bms           = { git = "ssh://git@github.com/rand12345/toucan_controller.git" }
+tesla_m3_bms       = { git = "ssh://git@github.com/rand12345/toucan_controller.git" }
+foxess_protocol    = { git = "ssh://git@github.com/rand12345/toucan_controller.git" }
+solax_protocol     = { git = "ssh://git@github.com/rand12345/toucan_controller.git" }
+pylontech_protocol = { git = "ssh://git@github.com/rand12345/toucan_controller.git" }
+byd_protocol       = { git = "ssh://git@github.com/rand12345/toucan_controller.git" }
+bms_standard       = { git = "ssh://git@github.com/rand12345/toucan_controller.git" }
 
 # defmt-rtt v0.4 not working with probe-run above 064ba39690cf5beb74b95e9acb24ccc6c105a57e
-defmt = { git = "https://github.com/knurling-rs/defmt", rev = "064ba39690cf5beb74b95e9acb24ccc6c105a57e" } 
-defmt-rtt = { git = "https://github.com/knurling-rs/defmt", rev = "064ba39690cf5beb74b95e9acb24ccc6c105a57e" }
-defmt-test = { git = "https://github.com/knurling-rs/defmt", rev = "064ba39690cf5beb74b95e9acb24ccc6c105a57e" }
+defmt       = { git = "https://github.com/knurling-rs/defmt", rev = "064ba39690cf5beb74b95e9acb24ccc6c105a57e" } 
+defmt-rtt   = { git = "https://github.com/knurling-rs/defmt", rev = "064ba39690cf5beb74b95e9acb24ccc6c105a57e" }
+defmt-test  = { git = "https://github.com/knurling-rs/defmt", rev = "064ba39690cf5beb74b95e9acb24ccc6c105a57e" }
 panic-probe = { git = "https://github.com/knurling-rs/defmt", rev = "064ba39690cf5beb74b95e9acb24ccc6c105a57e" }
-miniserde = {git = "https://github.com/dtolnay/miniserde.git"}
+miniserde   = { git = "https://github.com/dtolnay/miniserde.git"}

@@ -2,7 +2,7 @@
 authors = ["Nobody_Nowhere <63668759+rand12345@users.noreply.github.com>"]
 name = "stm32f407_controller"
 edition = "2021"
-version = "0.1.2"
+version = "0.1.3"
 
 [[bin]]
 name = "main"
@@ -15,8 +15,9 @@ name = "integration"
 harness = false
 
 [features]
-default = ["defmt", "ze40", "foxess", "ntp"] #, "mqtt", "tcp_debug"  "modbus_bridge",] 
+default = ["defmt"] #, "ntp"] #, "mqtt", "tcp_debug"  "modbus_bridge",] 
  
+syslog = ["ntp"]
 mqtt = []
 ntp = ["dep:sntpc", "dep:chrono", "chrono-tz"]
 http = ["dep:httparse"]
@@ -62,7 +63,7 @@ lazy_static = { version = "1", default-features = false, features = [
     "spin_no_std",
 ] }
 
-embedded-hal = "0.2.7"
+embedded-hal.workspace = true
 embedded-nal-async = { version = "0.7.1" }
 
 # mqtt
