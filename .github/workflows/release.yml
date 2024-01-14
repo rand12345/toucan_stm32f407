@@ -42,6 +42,7 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
     - name: Add build target
       run: rustup target add thumbv7em-none-eabi
+    # ZE40 --------------------------
     - name: Build ze40 -> FoxESS
       run: |
         cargo build --release --features  "ze40 foxess modbus_bridge"
@@ -50,6 +51,43 @@ jobs:
       with:
           name: ze40_foxess.bin
           path: ze40_foxess.bin
+
+    - name: Build ze40 -> Solax
+      run: |
+        cargo build --release --features  "ze40 solax modbus_bridge"
+        mv ./target/thumbv7em-none-eabi/release/main ./ze40_solax.bin
+    - uses: actions/upload-artifact@v3
+      with:
+          name: ze40_solax.bin
+          path: ze40_solax.bin
+
+    - name: Build ze40 -> BYD
+      run: |
+        cargo build --release --features  "ze40 byd modbus_bridge"
+        mv ./target/thumbv7em-none-eabi/release/main ./ze40_byd.bin
+    - uses: actions/upload-artifact@v3
+      with:
+          name: ze40_byd.bin
+          path: ze40_byd.bin
+
+    - name: Build ze40 -> PylonTech
+      run: |
+        cargo build --release --features  "ze40 pylontech modbus_bridge"
+        mv ./target/thumbv7em-none-eabi/release/main ./ze40_pylontech.bin
+    - uses: actions/upload-artifact@v3
+      with:
+          name: ze40_pylontech.bin
+          path: ze40_pylontech.bin
+
+    - name: Build ze40 -> PylonTech
+      run: |
+        cargo build --release --features  "ze40 forceh2 modbus_bridge"
+        mv ./target/thumbv7em-none-eabi/release/main ./ze40_pylontech_forceh2.bin
+    - uses: actions/upload-artifact@v3
+      with:
+          name: ze40_pylontech_forceh2.bin
+          path: ze40_pylontech_forceh2.bin
+    # ZE50 --------------------------
     - name: Build ze50 -> FoxESS
       run: |
         cargo build --release --features  "ze50 foxess modbus_bridge"
@@ -58,6 +96,42 @@ jobs:
       with:
           name: ze50_foxess.bin
           path: ze50_foxess.bin
+
+    - name: Build ze50 -> Solax
+      run: |
+        cargo build --release --features  "ze50 solax modbus_bridge"
+        mv ./target/thumbv7em-none-eabi/release/main ./ze50_solax.bin
+    - uses: actions/upload-artifact@v3
+      with:
+          name: ze50_solax.bin
+          path: ze50_solax.bin
+
+    - name: Build ze50 -> BYD
+      run: |
+        cargo build --release --features  "ze50 byd modbus_bridge"
+        mv ./target/thumbv7em-none-eabi/release/main ./ze50_byd.bin
+    - uses: actions/upload-artifact@v3
+      with:
+          name: ze50_byd.bin
+          path: ze50_byd.bin
+
+    - name: Build ze50 -> PylonTech
+      run: |
+        cargo build --release --features  "ze50 pylontech modbus_bridge"
+        mv ./target/thumbv7em-none-eabi/release/main ./ze50_pylontech.bin
+    - uses: actions/upload-artifact@v3
+      with:
+          name: ze50_pylontech.bin
+          path: ze50_pylontech.bin
+
+    - name: Build ze50 -> PylonTech Force H2
+      run: |
+        cargo build --release --features  "ze50 forceh2 modbus_bridge"
+        mv ./target/thumbv7em-none-eabi/release/main ./ze50_pylontech_forceh2.bin
+    - uses: actions/upload-artifact@v3
+      with:
+          name: ze50_pylontech_forceh2.bin
+          path: ze50_pylontech_forceh2.bin
 
     - name: Clean up
       run: |
@@ -76,7 +150,6 @@ jobs:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: "continuous"
           prerelease: true
-          title: "New Build"
+          title: "Build ${{github.ref_name}}"
           files: |
-            ze40_foxess.bin
-            ze50_foxess.bin
+            *.bin
