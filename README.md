@@ -14,9 +14,10 @@ Solar Hybrid battry emulation support:
 
 * Victron (LVDC)
 * BYD
-* PylonTech
+* PylonTech LV
+* PylonTech Force H2 HVDC
 * Solax
 * FoxESS V1
-* FoxESS V2 (New)
+* FoxESS V2 (cell monitoring)
 
 Individual protocol libraries are private, feel free to get in touch.
