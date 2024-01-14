@@ -37,9 +37,9 @@ pub mod can_processors_solax;
 #[cfg(any(feature = "foxess", feature = "solax"))]
 pub use can_processors_solax::inverter_rx;
 
-#[cfg(any(feature = "pylontech", feature = "byd"))]
+#[cfg(any(feature = "pylontech", feature = "byd", feature = "goodwe"))]
 pub mod can_processors_pylontech;
-#[cfg(any(feature = "pylontech", feature = "byd"))]
+#[cfg(any(feature = "pylontech", feature = "byd", feature = "goodwe"))]
 pub use can_processors_pylontech::inverter_rx;
 
 #[cfg(feature = "forceh2")]

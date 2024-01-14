@@ -23,6 +23,7 @@ use static_cell::StaticCell;
     feature = "foxess",
     feature = "byd",
     feature = "pylontech",
+    feature = "goodwe",
     feature = "forceh2"
 ))]
 use crate::tasks::{bms_rx, bms_tx_periodic, inverter_rx};
@@ -158,6 +159,7 @@ async fn main(spawner: Spawner) -> () {
         feature = "solax",
         feature = "foxess",
         feature = "byd",
+        feature = "goodwe",
         feature = "pylontech",
         feature = "forceh2"
     ))]
