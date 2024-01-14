@@ -16,47 +16,25 @@ on:
 jobs:
   build_and_release:
     runs-on: ubuntu-latest
-    # strategy:
-    #   matrix:
-    #     features:
-    #       - ""
-    #       - "ze40 solax modbus_bridge"
-    #       - "ze40 byd modbus_bridge"
-    #       - "ze40 pylontech modbus_bridge"
-    #       - "ze50 foxess modbus_bridge"
-    #       - "ze50 solax modbus_bridge"
-    #       - "ze50 byd modbus_bridge"
-    #       - "ze50 pylontech modbus_bridge"
-    #     output_name:
-    #       - "ze40_foxess.bin"
-    #       - "ze40_solax.bin"
-    #       - "ze40_byd.bin"
-    #       - "ze40_pylontech.bin"
-    #       - "ze50_foxess.bin"
-    #       - "ze50_solax.bin"
-    #       - "ze50_byd.bin"
-    #       - "ze50_pylontech.bin"
 
     steps:
-    - id: get_version
-      uses: battila7/get-version-action@v2
-
-    - name: Checkout code
-      uses: actions/checkout@v3
-        
-    - name: Build and Release 0
-      id: build_and_release_0
-      uses: ./.github/workflows/build.yml
+    - uses: actions/checkout@v3
+      id: checkout 
+    - uses: battila7/get-version-action@v2
+      id: get_version
+    - uses: webfactory/ssh-agent@v0.8.0
       with:
-        features: "ze40 foxess modbus_bridge"
-        output_name: "ze40_foxess.bin"
-
-    # - name: Build and Release 1
-    #   id: build_and_release_1
-    #   uses: ./.github/workflows/build.yml
-    #   with:
-    #     features: ${{ fromJson(needs.build_and_release.outputs.matrix)[1].features }}
-    #     output_name: ${{ fromJson(needs.build_and_release.outputs.matrix)[1].output_name }}
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+    - name: Add build target
+      run: rustup target add thumbv7em-none-eabi
+    - name: Build ze40 -> FoxESS
+      run: |
+        cargo build --release --features  "ze40 foxess modbus_bridge"
+        mv ./target/thumbv7em-none-eabi/release/main ./target/thumbv7em-none-eabi/release/ze40_foxess.bin"
+    - name: Build ze50 -> FoxESS
+      run: |
+        cargo build --release --features  "ze50 foxess modbus_bridge"
+        mv ./target/thumbv7em-none-eabi/release/main ./target/thumbv7em-none-eabi/release/ze50_foxess.bin"
 
     - name: Create Release
       id: create_release
@@ -78,16 +56,17 @@ jobs:
         asset_path: ./target/thumbv7em-none-eabi/release/"ze40_foxess.bin"
         asset_name: "ZE40 => FoxESS"
         asset_content_type: application/octet-stream
-    # - name: Upload Release Asset
-    #   id: upload-release-asset-1
-    #   uses: actions/upload-release-asset@v1
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   with:
-    #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-    #     asset_path: ./target/thumbv7em-none-eabi/release/${{ fromJson(needs.build_and_release.outputs.matrix)[1].output_name }}
-    #     asset_name: ${{ fromJson(needs.build_and_release.outputs.matrix)[1].output_name }}
-    #     asset_content_type: application/octet-stream
+    - name: Upload Release Asset
+      id: upload-release-asset-1
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./target/thumbv7em-none-eabi/release/"ze50_foxess.bin"
+        asset_name: "ZE40 => FoxESS"
+        asset_content_type: application/octet-stream
+
     - name: Clean up
       run: |
         cargo clean
