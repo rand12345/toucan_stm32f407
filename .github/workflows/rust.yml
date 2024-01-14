@@ -18,11 +18,11 @@ jobs:
     env:
       MQTTHOST: "91.121.93.94"
       MQTTPORT: 1883
-      MQTTCLIENTID: "Toucan_Controller"
+      MQTTCLIENTID: "Client_${{ github.run_id }}"
       MQTTUSERNAME: ""
       MQTTPASSWORD: ""
-      MQTTBASETOPIC: "Toucan_Controller/test_data"
-      MQTTWILLTOPIC: "Toucan_Controller/will"
+      MQTTBASETOPIC: "Toucan_Controller_${{ github.run_id }}/test_data"
+      MQTTWILLTOPIC: "Toucan_Controller_${{ github.run_id }}/will"
       MQTTRETAIN: true
       MQTTINTERVAL: 10
       MQTTQOS: 0
@@ -35,7 +35,15 @@ jobs:
     - uses: webfactory/ssh-agent@v0.8.0
       with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-    - name: Setup build target
+    - name: Add build target
       run: rustup target add thumbv7em-none-eabi
-    - name: Build
-      run: cargo build --release --features "ze40 foxess mqtt modbus_bridge"
+    - name: Build ze40 -> FoxESS
+      run: cargo build --release --features "ze40 foxess ntp mqtt modbus_bridge"
+    - name: Build ze40 -> Solax
+      run: cargo build --release --features "ze40 solax ntp mqtt modbus_bridge"
+    - name: Build ze40 -> BYD
+      run: cargo build --release --features "ze40 byd ntp mqtt modbus_bridge"
+    - name: Build ze40 -> Pylontech
+      run: cargo build --release --features "ze40 pylontech ntp mqtt modbus_bridge"
+    - name: Build ze50 -> Solax
+      run: cargo build --release --features "ze50 solax ntp mqtt modbus_bridge"
