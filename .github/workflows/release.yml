@@ -58,43 +58,25 @@ jobs:
       with:
           name: ze50_foxess.bin
           path: ze50_foxess.bin
-    # - name: Generate unique name
-    #   id: generate_name
-    #   run: |
-    #     UNIQUE_NAME="release-$(date +%Y-%m-%d_%H:%M)"
-    #     echo "UNIQUE_NAME=$UNIQUE_NAME" >> $GITHUB_ENV
-    # - name: Create Release
-    #   id: create_release
-    #   uses: actions/create-release@v1
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   with:
-    #     tag_name: ${{ github.ref_name }}-${{ env.UNIQUE_NAME }}
-    #     release_name: ${{ env.UNIQUE_NAME }}
-    #     draft: false
-    #     prerelease: false
-    # - name: Upload Release Asset 0
-    #   id: upload-release-asset-0
-    #   uses: actions/upload-release-asset@v1
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   with:
-    #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-    #     asset_path: ./target/thumbv7em-none-eabi/release/ze40_foxess.bin
-    #     asset_name: "ZE40 => FoxESS"
-    #     asset_content_type: application/octet-stream
-    # - name: Upload Release Asset 1
-    #   id: upload-release-asset-1
-    #   uses: actions/upload-release-asset@v1
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   with:
-    #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-    #     asset_path: ./target/thumbv7em-none-eabi/release/ze50_foxess.bin
-    #     asset_name: "ZE40 => FoxESS"
-    #     asset_content_type: application/octet-stream
 
     - name: Clean up
       run: |
         cargo clean
-        
+
+  pre-release:
+    name: "pre-release"
+    runs-on: "ubuntu-latest"
+    needs: [build_and_release]
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "continuous"
+          prerelease: true
+          title: "New Build"
+          files: |
+            ze40_foxess.bin
+            ze50_foxess.bin
