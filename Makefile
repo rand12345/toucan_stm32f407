@@ -1,6 +1,6 @@
 # List of features
 GROUP1 := ze40 ze50 tesla_m3
-GROUP2 := solax foxess byd pylontech
+GROUP2 := solax foxess byd pylontech forceh2
 
 .PHONY: select-features build
 

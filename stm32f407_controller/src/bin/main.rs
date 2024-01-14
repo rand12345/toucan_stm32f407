@@ -18,16 +18,15 @@ use embedded_alloc::Heap;
 use hal::*;
 use static_cell::StaticCell;
 
-#[cfg(any(feature = "pylontech", feature = "byd"))]
-use crate::tasks::can_processors_pylontech::*;
-#[cfg(any(feature = "foxess", feature = "solax"))]
-use crate::tasks::can_processors_solax::*;
-#[cfg(feature = "tesla_m3")]
-use crate::tasks::can_processors_tesla_m3::*;
-#[cfg(feature = "ze40")]
-use crate::tasks::can_processors_ze40::*;
-#[cfg(feature = "ze50")]
-use crate::tasks::can_processors_ze50::*;
+#[cfg(any(
+    feature = "solax",
+    feature = "foxess",
+    feature = "byd",
+    feature = "pylontech",
+    feature = "forceh2"
+))]
+use crate::tasks::{bms_rx, bms_tx_periodic, inverter_rx};
+
 #[cfg(feature = "ntp")]
 use embassy_stm32::rtc::{Rtc, RtcConfig};
 #[cfg(feature = "syslog")]
@@ -40,9 +39,10 @@ mod statics;
 mod tasks;
 mod types;
 mod utils;
+mod web;
+
 #[cfg(any(feature = "ze40", feature = "ze50", feature = "tesla_m3"))]
 mod wdt;
-mod web;
 
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
@@ -158,7 +158,8 @@ async fn main(spawner: Spawner) -> () {
         feature = "solax",
         feature = "foxess",
         feature = "byd",
-        feature = "pylontech"
+        feature = "pylontech",
+        feature = "forceh2"
     ))]
     {
         defmt::unwrap!(spawner.spawn(inverter_rx()));

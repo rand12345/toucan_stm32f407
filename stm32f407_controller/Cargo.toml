@@ -15,7 +15,7 @@ name = "integration"
 harness = false
 
 [features]
-default = ["defmt","ntp", "modbus_bridge", "mqtt"] #, "ntp"] #, "mqtt", "tcp_debug"  ,] 
+default = ["defmt"] 
  
 syslog = ["ntp"]
 mqtt = []
@@ -33,6 +33,7 @@ ze50 = ["dep:ze50_bms"]
 ze40 = ["dep:ze40_bms"]
 foxess = ["dep:foxess_protocol"]
 solax = ["dep:solax_protocol"]
+forceh2 = ["dep:pylontech_force_h2_protocol"]
 
 [dependencies]
 cortex-m = { version = "0.7.6", features = ["inline-asm", "critical-section-single-core"] }
@@ -117,6 +118,10 @@ git = "ssh://git@github.com/rand12345/toucan_controller.git"
 optional = true
 
 [dependencies.pylontech_protocol]
+git = "ssh://git@github.com/rand12345/toucan_controller.git"
+optional = true
+
+[dependencies.pylontech_force_h2_protocol]
 git = "ssh://git@github.com/rand12345/toucan_controller.git"
 optional = true
 

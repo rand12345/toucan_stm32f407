@@ -19,18 +19,33 @@ pub mod tcp_debug;
 
 #[cfg(feature = "ze40")]
 pub mod can_processors_ze40;
+#[cfg(feature = "ze40")]
+pub use can_processors_ze40::{bms_rx, bms_tx_periodic};
 
 #[cfg(feature = "ze50")]
 pub mod can_processors_ze50;
-
-#[cfg(any(feature = "pylontech", feature = "byd"))]
-pub mod can_processors_pylontech;
-
-#[cfg(any(feature = "foxess", feature = "solax"))]
-pub mod can_processors_solax;
+#[cfg(feature = "ze50")]
+pub use can_processors_ze50::{bms_rx, bms_tx_periodic};
 
 #[cfg(feature = "tesla_m3")]
 pub mod can_processors_tesla_m3;
+#[cfg(feature = "tesla_m3")]
+pub use can_processors_tesla_m3::{bms_rx, bms_tx_periodic};
+
+#[cfg(any(feature = "foxess", feature = "solax"))]
+pub mod can_processors_solax;
+#[cfg(any(feature = "foxess", feature = "solax"))]
+pub use can_processors_solax::inverter_rx;
+
+#[cfg(any(feature = "pylontech", feature = "byd"))]
+pub mod can_processors_pylontech;
+#[cfg(any(feature = "pylontech", feature = "byd"))]
+pub use can_processors_pylontech::inverter_rx;
+
+#[cfg(feature = "forceh2")]
+pub mod can_processors_pylontech_forceh2;
+#[cfg(feature = "forceh2")]
+pub use can_processors_pylontech_forceh2::inverter_rx;
 
 pub mod leds;
 
