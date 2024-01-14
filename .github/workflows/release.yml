@@ -148,8 +148,17 @@ jobs:
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "continuous"
+          automatic_release_tag: "release"
           prerelease: true
-          title: "Build ${{github.ref_name}}"
+          title: "Release ${{github.ref_name}}"
           files: |
-            *.bin
+            ze40_foxess.bin
+            ze40_solax.bin
+            ze40_byd.bin
+            ze40_pylontech.bin
+            ze40_pylontech_forceh2.bin
+            ze50_foxess.bin
+            ze50_solax.bin
+            ze50_byd.bin
+            ze50_pylontech.bin
+            ze50_pylontech_forceh2.bin
