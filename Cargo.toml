@@ -54,14 +54,6 @@ embassy-usb      = { version = "0.1.0", git = "https://github.com/embassy-rs/emb
 embassy-net      = { version = "0.4.0", git = "https://github.com/embassy-rs/embassy.git", rev = "6ff0e4bcf5fbcccd8ae52cc83be7ed9f83b66fde", features = ["defmt", "tcp", "udp", "dhcpv4", "medium-ethernet", "proto-ipv4"] }
 embassy-futures  = { version = "^0" ,   git = "https://github.com/embassy-rs/embassy.git", rev = "6ff0e4bcf5fbcccd8ae52cc83be7ed9f83b66fde" }
 
-ze40_bms           = { git = "ssh://git@github.com/rand12345/toucan_controller.git" }
-tesla_m3_bms       = { git = "ssh://git@github.com/rand12345/toucan_controller.git", features = ["debug"] }
-foxess_protocol    = { git = "ssh://git@github.com/rand12345/toucan_controller.git", features = ["defmt"] }
-solax_protocol     = { git = "ssh://git@github.com/rand12345/toucan_controller.git", features = ["defmt"] }
-byd_protocol       = { git = "ssh://git@github.com/rand12345/toucan_controller.git", features = ["v65"] }
-pylontech_protocol = { git = "ssh://git@github.com/rand12345/toucan_controller.git" }
-bms_standard       = { git = "ssh://git@github.com/rand12345/toucan_controller.git" }
-
 defmt        = { version = "0.3" }
 no-std-net   = { version = "0.6.0" }
 heapless     = { version = "0.8.0", default-features = false }

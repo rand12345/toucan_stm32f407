@@ -86,37 +86,44 @@ sntpc = {path = "../sntpc", optional = true, default-features = false}
 chrono = { version = "0.4", optional = true, default-features = false}
 chrono-tz = { version = "0.8.5", optional = true, default-features = false}
 
+# ze40_bms           = { git = "ssh://git@github.com/rand12345/toucan_controller.git" }
+# tesla_m3_bms       = { git = "ssh://git@github.com/rand12345/toucan_controller.git", features = ["debug"] }
+# foxess_protocol    = { git = "ssh://git@github.com/rand12345/toucan_controller.git", features = ["defmt"] }
+# solax_protocol     = { git = "ssh://git@github.com/rand12345/toucan_controller.git", features = ["defmt"] }
+# byd_protocol       = { git = "ssh://git@github.com/rand12345/toucan_controller.git", features = ["v65"] }
+# pylontech_protocol = { git = "ssh://git@github.com/rand12345/toucan_controller.git" }
+# bms_standard       = { git = "ssh://git@github.com/rand12345/toucan_controller.git" }
 
 [dependencies.ze40_bms]
-workspace = true
+git = "ssh://git@github.com/rand12345/toucan_controller.git"
 optional = true
 
 [dependencies.ze50_bms]
-workspace = true
+git = "ssh://git@github.com/rand12345/toucan_controller.git"
 optional = true
 
 [dependencies.tesla_m3_bms]
-workspace = true
+git = "ssh://git@github.com/rand12345/toucan_controller.git"
 optional = true
 
 [dependencies.foxess_protocol]
-workspace = true
+git = "ssh://git@github.com/rand12345/toucan_controller.git"
 optional = true
 
 [dependencies.solax_protocol]
-workspace = true
+git = "ssh://git@github.com/rand12345/toucan_controller.git"
 optional = true
 
 [dependencies.byd_protocol]
-workspace = true
+git = "ssh://git@github.com/rand12345/toucan_controller.git"
 optional = true
 
 [dependencies.pylontech_protocol]
-workspace = true
+git = "ssh://git@github.com/rand12345/toucan_controller.git"
 optional = true
 
 [dependencies.bms_standard]
-workspace = true
+git = "ssh://git@github.com/rand12345/toucan_controller.git"
 
 [dependencies.syslog-emb]
 path = "../syslog-emb/" 
