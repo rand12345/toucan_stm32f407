@@ -19,7 +19,7 @@ jobs:
     strategy:
       matrix:
         features:
-          - "ze40 foxess modbus_bridge"
+          - ""
           - "ze40 solax modbus_bridge"
           - "ze40 byd modbus_bridge"
           - "ze40 pylontech modbus_bridge"
@@ -38,26 +38,22 @@ jobs:
           - "ze50_pylontech.bin"
 
     steps:
-    - name: Set up matrix
-      id: setup-matrix
-      run: |
-        echo "::set-output name=matrix::[
-          {\"features\": \"${{ matrix.features }}\", \"output_name\": \"${{ matrix.output_name }}\"}
-        ]" | jq -c .
+    - id: get_version
+      uses: battila7/get-version-action@v2
         
     - name: Build and Release 0
       id: build_and_release_0
       uses: ./.github/workflows/build_template.yml
       with:
-        features: ${{ fromJson(needs.build_and_release.outputs.matrix)[0].features }}
-        output_name: ${{ fromJson(needs.build_and_release.outputs.matrix)[0].output_name }}
+        features: "ze40 foxess modbus_bridge"
+        output_name: "ze40_foxess.bin"
 
-    - name: Build and Release 1
-      id: build_and_release_1
-      uses: ./.github/workflows/build_template.yml
-      with:
-        features: ${{ fromJson(needs.build_and_release.outputs.matrix)[1].features }}
-        output_name: ${{ fromJson(needs.build_and_release.outputs.matrix)[1].output_name }}
+    # - name: Build and Release 1
+    #   id: build_and_release_1
+    #   uses: ./.github/workflows/build_template.yml
+    #   with:
+    #     features: ${{ fromJson(needs.build_and_release.outputs.matrix)[1].features }}
+    #     output_name: ${{ fromJson(needs.build_and_release.outputs.matrix)[1].output_name }}
 
     - name: Create Release
       id: create_release
@@ -66,7 +62,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ github.ref }}
-        release_name: ${{ steps.version.outputs.version }}
+        release_name: ${{ steps.get_version.outputs.version }}
         draft: false
         prerelease: false
     - name: Upload Release Asset
@@ -76,19 +72,19 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./target/thumbv7em-none-eabi/release/${{ fromJson(needs.build_and_release.outputs.matrix)[0].output_name }}
-        asset_name: ${{ fromJson(needs.build_and_release.outputs.matrix)[0].output_name }}
+        asset_path: ./target/thumbv7em-none-eabi/release/"ze40_foxess.bin"
+        asset_name: "ZE40 => FoxESS"
         asset_content_type: application/octet-stream
-    - name: Upload Release Asset
-      id: upload-release-asset-1
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./target/thumbv7em-none-eabi/release/${{ fromJson(needs.build_and_release.outputs.matrix)[1].output_name }}
-        asset_name: ${{ fromJson(needs.build_and_release.outputs.matrix)[1].output_name }}
-        asset_content_type: application/octet-stream
+    # - name: Upload Release Asset
+    #   id: upload-release-asset-1
+    #   uses: actions/upload-release-asset@v1
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   with:
+    #     upload_url: ${{ steps.create_release.outputs.upload_url }}
+    #     asset_path: ./target/thumbv7em-none-eabi/release/${{ fromJson(needs.build_and_release.outputs.matrix)[1].output_name }}
+    #     asset_name: ${{ fromJson(needs.build_and_release.outputs.matrix)[1].output_name }}
+    #     asset_content_type: application/octet-stream
     - name: Clean up
       run: |
         cargo clean
