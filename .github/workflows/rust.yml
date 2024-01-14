@@ -22,4 +22,4 @@ jobs:
       with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
     - name: Build
-      run: cargo build --release --features ze40 foxess mqtt modbus_bridge
+      run: cargo build --release --features "ze40 foxess mqtt modbus_bridge"
