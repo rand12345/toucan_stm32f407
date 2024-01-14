@@ -48,6 +48,10 @@ jobs:
       run: cargo build --release --features "ze40 solax ntp mqtt modbus_bridge"
     - name: Build ze40 -> BYD
       run: cargo build --release --features "ze40 byd ntp mqtt modbus_bridge"
+    - name: Build ze40 -> Goodwe
+      run: cargo build --release --features "ze40 goodwe ntp mqtt modbus_bridge"
+    - name: Build ze40 -> Force H2
+      run: cargo build --release --features "ze40 forceh2 ntp mqtt modbus_bridge"
     - name: Build ze40 -> Pylontech
       run: cargo build --release --features "ze40 pylontech ntp mqtt modbus_bridge"
     - name: Build ze50 -> Solax
