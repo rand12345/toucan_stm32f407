@@ -30,6 +30,7 @@ jobs:
       RS485BAUD: 9600
       NTPSERVER: "216.40.34.37:123"
       TIMEZONE: "Europe/London"
+      UNIQUE_NAME: ""
 
     steps:
     - uses: actions/checkout@v3
@@ -45,41 +46,53 @@ jobs:
       run: |
         cargo build --release --features  "ze40 foxess modbus_bridge"
         mv ./target/thumbv7em-none-eabi/release/main ./target/thumbv7em-none-eabi/release/ze40_foxess.bin
+    - uses: actions/upload-artifact@v3
+      with:
+          name: ze40_foxess.bin
+          path: ze40_foxess.bin
     - name: Build ze50 -> FoxESS
       run: |
         cargo build --release --features  "ze50 foxess modbus_bridge"
         mv ./target/thumbv7em-none-eabi/release/main ./target/thumbv7em-none-eabi/release/ze50_foxess.bin
-
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - uses: actions/upload-artifact@v3
       with:
-        tag_name: ${{ github.ref_name }}
-        release_name: Release ${{ github.ref }}
-        draft: false
-        prerelease: false
-    - name: Upload Release Asset
-      id: upload-release-asset-0
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./target/thumbv7em-none-eabi/release/ze40_foxess.bin
-        asset_name: "ZE40 => FoxESS"
-        asset_content_type: application/octet-stream
-    - name: Upload Release Asset
-      id: upload-release-asset-1
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./target/thumbv7em-none-eabi/release/ze50_foxess.bin
-        asset_name: "ZE40 => FoxESS"
-        asset_content_type: application/octet-stream
+          name: ze50_foxess.bin
+          path: ze50_foxess.bin
+    # - name: Generate unique name
+    #   id: generate_name
+    #   run: |
+    #     UNIQUE_NAME="release-$(date +%Y-%m-%d_%H:%M)"
+    #     echo "UNIQUE_NAME=$UNIQUE_NAME" >> $GITHUB_ENV
+    # - name: Create Release
+    #   id: create_release
+    #   uses: actions/create-release@v1
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   with:
+    #     tag_name: ${{ github.ref_name }}-${{ env.UNIQUE_NAME }}
+    #     release_name: ${{ env.UNIQUE_NAME }}
+    #     draft: false
+    #     prerelease: false
+    # - name: Upload Release Asset 0
+    #   id: upload-release-asset-0
+    #   uses: actions/upload-release-asset@v1
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   with:
+    #     upload_url: ${{ steps.create_release.outputs.upload_url }}
+    #     asset_path: ./target/thumbv7em-none-eabi/release/ze40_foxess.bin
+    #     asset_name: "ZE40 => FoxESS"
+    #     asset_content_type: application/octet-stream
+    # - name: Upload Release Asset 1
+    #   id: upload-release-asset-1
+    #   uses: actions/upload-release-asset@v1
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   with:
+    #     upload_url: ${{ steps.create_release.outputs.upload_url }}
+    #     asset_path: ./target/thumbv7em-none-eabi/release/ze50_foxess.bin
+    #     asset_name: "ZE40 => FoxESS"
+    #     asset_content_type: application/octet-stream
 
     - name: Clean up
       run: |
