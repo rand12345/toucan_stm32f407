@@ -45,7 +45,7 @@ jobs:
     - name: Build ze40 -> FoxESS
       run: |
         cargo build --release --features  "ze40 foxess modbus_bridge"
-        mv ./target/thumbv7em-none-eabi/release/main ./target/thumbv7em-none-eabi/release/ze40_foxess.bin
+        mv ./target/thumbv7em-none-eabi/release/main ./ze40_foxess.bin
     - uses: actions/upload-artifact@v3
       with:
           name: ze40_foxess.bin
@@ -53,7 +53,7 @@ jobs:
     - name: Build ze50 -> FoxESS
       run: |
         cargo build --release --features  "ze50 foxess modbus_bridge"
-        mv ./target/thumbv7em-none-eabi/release/main ./target/thumbv7em-none-eabi/release/ze50_foxess.bin
+        mv ./target/thumbv7em-none-eabi/release/main ./ze50_foxess.bin
     - uses: actions/upload-artifact@v3
       with:
           name: ze50_foxess.bin
