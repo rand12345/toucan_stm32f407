@@ -16,26 +16,26 @@ on:
 jobs:
   build_and_release:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        features:
-          - ""
-          - "ze40 solax modbus_bridge"
-          - "ze40 byd modbus_bridge"
-          - "ze40 pylontech modbus_bridge"
-          - "ze50 foxess modbus_bridge"
-          - "ze50 solax modbus_bridge"
-          - "ze50 byd modbus_bridge"
-          - "ze50 pylontech modbus_bridge"
-        output_name:
-          - "ze40_foxess.bin"
-          - "ze40_solax.bin"
-          - "ze40_byd.bin"
-          - "ze40_pylontech.bin"
-          - "ze50_foxess.bin"
-          - "ze50_solax.bin"
-          - "ze50_byd.bin"
-          - "ze50_pylontech.bin"
+    # strategy:
+    #   matrix:
+    #     features:
+    #       - ""
+    #       - "ze40 solax modbus_bridge"
+    #       - "ze40 byd modbus_bridge"
+    #       - "ze40 pylontech modbus_bridge"
+    #       - "ze50 foxess modbus_bridge"
+    #       - "ze50 solax modbus_bridge"
+    #       - "ze50 byd modbus_bridge"
+    #       - "ze50 pylontech modbus_bridge"
+    #     output_name:
+    #       - "ze40_foxess.bin"
+    #       - "ze40_solax.bin"
+    #       - "ze40_byd.bin"
+    #       - "ze40_pylontech.bin"
+    #       - "ze50_foxess.bin"
+    #       - "ze50_solax.bin"
+    #       - "ze50_byd.bin"
+    #       - "ze50_pylontech.bin"
 
     steps:
     - id: get_version
@@ -43,14 +43,14 @@ jobs:
         
     - name: Build and Release 0
       id: build_and_release_0
-      uses: ./.github/workflows/build_template.yml
+      uses: ./.github/workflows/build.yml
       with:
         features: "ze40 foxess modbus_bridge"
         output_name: "ze40_foxess.bin"
 
     # - name: Build and Release 1
     #   id: build_and_release_1
-    #   uses: ./.github/workflows/build_template.yml
+    #   uses: ./.github/workflows/build.yml
     #   with:
     #     features: ${{ fromJson(needs.build_and_release.outputs.matrix)[1].features }}
     #     output_name: ${{ fromJson(needs.build_and_release.outputs.matrix)[1].output_name }}
