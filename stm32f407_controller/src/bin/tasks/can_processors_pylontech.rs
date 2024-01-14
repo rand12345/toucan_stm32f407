@@ -7,17 +7,23 @@ const INVERTER_SEND_MS: u64 = 1000;
 #[cfg(feature = "byd")]
 use byd_protocol as Inverter;
 
+#[cfg(feature = "goodwe")]
+use goodwe_protocol as Inverter;
+
 #[cfg(feature = "pylontech")]
 const LABEL: &str = "PylonTech";
 
 #[cfg(feature = "byd")]
 const LABEL: &str = "BYD";
 
+#[cfg(feature = "goodwe")]
+const LABEL: &str = "GoodWe";
+
 #[cfg(feature = "pylontech")]
 use pylontech_protocol as Inverter;
 
 #[allow(unused_assignments)]
-#[cfg(any(feature = "pylontech", feature = "byd"))]
+#[cfg(any(feature = "pylontech", feature = "byd", feature = "goodwe"))]
 #[embassy_executor::task]
 pub async fn inverter_rx() -> ! {
     use embassy_time::{Duration, Timer};
@@ -47,7 +53,7 @@ pub async fn inverter_rx() -> ! {
         };
         // drops mutex
         for frame in Inverter::iter::<Frame>(bms) {
-            info!("Sending PylonTech frame {:?}", frame.data());
+            info!("Sending {} frame {:?}", LABEL, frame.data());
             trans.send(frame).await;
         }
         CONTACTOR_STATE.signal(inverter_comms_valid);

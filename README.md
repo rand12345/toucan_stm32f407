@@ -14,6 +14,7 @@ Solar Hybrid battry emulation support:
 
 * Victron (LVDC)
 * BYD
+* Goodwe GW6000
 * PylonTech LV
 * PylonTech Force H2 HVDC
 * Solax

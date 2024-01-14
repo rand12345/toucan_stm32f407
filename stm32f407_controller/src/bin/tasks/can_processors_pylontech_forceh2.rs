@@ -43,7 +43,7 @@ pub async fn inverter_rx() -> ! {
             continue;
         };
 
-        match inverter.parser(&bms) {
+        match inverter.parser(&bms, frame) {
             Ok(iter) => {
                 inverter_comms_valid = true;
                 for frame in iter {
