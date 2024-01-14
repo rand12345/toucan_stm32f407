@@ -69,6 +69,15 @@ jobs:
       with:
           name: ze40_byd.bin
           path: ze40_byd.bin
+          
+    - name: Build ze40 -> Goodwe
+      run: |
+        cargo build --release --features  "ze40 goodwe modbus_bridge"
+        mv ./target/thumbv7em-none-eabi/release/main ./ze40_byd.bin
+    - uses: actions/upload-artifact@v3
+      with:
+          name: ze40_goodwe.bin
+          path: ze40_goodwe.bin
 
     - name: Build ze40 -> PylonTech
       run: |
@@ -115,6 +124,15 @@ jobs:
           name: ze50_byd.bin
           path: ze50_byd.bin
 
+    - name: Build ze50 -> Goodwe
+      run: |
+        cargo build --release --features  "ze50 goodwe modbus_bridge"
+        mv ./target/thumbv7em-none-eabi/release/main ./ze50_byd.bin
+    - uses: actions/upload-artifact@v3
+      with:
+          name: ze50_goodwe.bin
+          path: ze50_goodwe.bin
+
     - name: Build ze50 -> PylonTech
       run: |
         cargo build --release --features  "ze50 pylontech modbus_bridge"
@@ -155,10 +173,12 @@ jobs:
             ze40_foxess.bin
             ze40_solax.bin
             ze40_byd.bin
+            ze40_goodwe.bin
             ze40_pylontech.bin
             ze40_pylontech_forceh2.bin
             ze50_foxess.bin
             ze50_solax.bin
             ze50_byd.bin
+            ze50_goodwe.bin
             ze50_pylontech.bin
             ze50_pylontech_forceh2.bin
