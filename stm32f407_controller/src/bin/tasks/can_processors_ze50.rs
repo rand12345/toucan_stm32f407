@@ -1,4 +1,5 @@
 use crate::statics::*;
+use bms_standard::Bms;
 use defmt::{error, info, warn, Debug2Format};
 use embassy_sync::blocking_mutex::raw::ThreadModeRawMutex as _Mutex;
 use embassy_sync::mutex::Mutex;

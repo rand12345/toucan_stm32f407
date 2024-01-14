@@ -1,10 +1,15 @@
 name: Rust
 
+
 on:
   push:
-    branches: [ "main" ]
+    paths-ignore:
+      - "README.md"
+      - ".github/workflows/**"
+
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 env:
   CARGO_TERM_COLOR: always
