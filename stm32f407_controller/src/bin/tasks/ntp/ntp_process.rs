@@ -3,15 +3,15 @@ use chrono::{DateTime as ChronoDateTime, NaiveDateTime, TimeZone};
 use chrono_tz::Tz;
 use core::str::FromStr;
 use defmt::{error, info, warn, Debug2Format, Format};
-use dotenvy_macro::dotenv;
 use embassy_net::{
     udp::{PacketMetadata, UdpSocket},
     IpAddress, IpEndpoint, Ipv4Address,
 };
 use embassy_stm32::rtc::{DateTime, Rtc};
-const TZ: Tz = chrono_tz::Europe::London;
 use no_std_net::{SocketAddr, ToSocketAddrs};
 use sntpc::{NtpContext, NtpResult, NtpTimestampGenerator};
+
+include!("timezone.rs");
 
 #[derive(Debug, Format)]
 pub enum NtpError {
@@ -72,7 +72,7 @@ pub async fn ntp_task(stack: StackType, mut rtc: Rtc) {
     use crate::statics::UTC_NOW;
 
     let rtc_now = rtc.now().unwrap_or(NaiveDateTime::MIN.into());
-    let ntp_cfg_ip = dotenv!("ntp");
+    let ntp_cfg_ip = env!("NTPSERVER");
     if ntp_cfg_ip.is_empty() {
         warn!("No NTP server configured in .env");
     } else {

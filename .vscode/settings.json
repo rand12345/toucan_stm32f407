@@ -4,17 +4,6 @@
         "editor.formatOnSave": false
     },
     "rust-analyzer.check.allTargets": false,
-    // "rust-analyzer.server.path": "~/.cargo/bin/rust-analyzer",
-    // "rust-analyzer.check.noDefaultFeatures": true,
-    // "rust-analyzer.cargo.noDefaultFeatures": true,
-    // "rust-analyzer.cargo.target": "thumbv7em-none-eabi",
-    // "rust-analyzer.check.extraArgs": [
-    //     "--target",
-    //     "thumbv7m-none-eabi"
-    // ],
-    // "rust-analyzer.linkedProjects": [
-    //     "./stm32f105_gateway/Cargo.toml",
-    // ],
     "rust-analyzer.showUnlinkedFileNotification": false,
     "cSpell.enabled": false,
 }

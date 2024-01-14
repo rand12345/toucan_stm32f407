@@ -15,6 +15,20 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    env:
+      MQTTHOST: "91.121.93.94"
+      MQTTPORT: 1883
+      MQTTCLIENTID: "Toucan_Controller"
+      MQTTUSERNAME: ""
+      MQTTPASSWORD: ""
+      MQTTBASETOPIC: "Toucan_Controller/test_data"
+      MQTTWILLTOPIC: "Toucan_Controller/will"
+      MQTTRETAIN: true
+      MQTTINTERVAL: 10
+      MQTTQOS: 0
+      RS485BAUD: 9600
+      NTPSERVER: "216.40.34.37:123"
+      TIMEZONE: "Europe/London"
 
     steps:
     - uses: actions/checkout@v3

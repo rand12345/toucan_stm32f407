@@ -92,7 +92,7 @@ pub fn spi3(p: SPI3, sck: PB3, mosi: PC12, miso: PB4) -> Spi<'static, SPI3, NoDm
     Spi::new(p, sck, mosi, miso, NoDma, NoDma, config)
 }
 
-#[cfg(feature = "modbus_gateway")]
+#[cfg(feature = "modbus_bridge")]
 pub fn rs485(
     p: USART2,
     rx_pin: PD6,
@@ -104,7 +104,9 @@ pub fn rs485(
         USART2 => embassy_stm32::usart::InterruptHandler<embassy_stm32::peripherals::USART2>;
     });
     let mut config = embassy_stm32::usart::Config::default();
-    config.baudrate = 9600;
+    config.baudrate = env!("RS485BAUD")
+        .parse()
+        .expect("Bad RS485 baudrate in env");
     config.assume_noise_free = false;
     // config.detect_previous_overrun = true;
     usart::Uart::new(p, rx_pin, tx_pin, IrqUSART2, tx_dma, rx_dma, config).unwrap()

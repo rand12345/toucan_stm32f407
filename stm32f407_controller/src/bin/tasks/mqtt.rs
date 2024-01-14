@@ -7,7 +7,7 @@ use core::fmt::{self, Write};
 use defmt::error;
 use defmt::info;
 use defmt::Debug2Format;
-use dotenvy_macro::dotenv;
+
 use embassy_net::{
     tcp::client::{TcpClient, TcpClientState},
     Stack,
@@ -57,18 +57,18 @@ pub async fn mqtt_net_task(stack: &'static Stack<EthDevice>) {
     let client = TcpClient::new(stack, &state);
 
     let mqtt_config = crate::config::MqttConfig::builder()
-        .host(dotenv!("host"))
-        .port(dotenv!("port").parse().expect("Bad MQTT port in env file"))
-        .client_id(dotenv!("client_id"))
-        .username(dotenv!("username"))
-        .password(dotenv!("password"))
-        .basetopic(dotenv!("topic"))
-        .qos(dotenv!("qos").parse().expect("Bad QOS number in env file"))
-        .retain(dotenv!("retain") == "true")
+        .host(env!("MQTTHOST"))
+        .port(env!("MQTTPORT").parse().expect("Bad MQTT port in env"))
+        .client_id(env!("MQTTCLIENTID"))
+        .username(env!("MQTTUSERNAME"))
+        .password(env!("MQTTPASSWORD"))
+        .basetopic(env!("MQTTBASETOPIC"))
+        .qos(env!("MQTTQOS").parse().expect("Bad QOS number in env"))
+        .retain(env!("MQTTRETAIN") == "true")
         .interval(
-            dotenv!("interval")
+            env!("MQTTINTERVAL")
                 .parse()
-                .expect("Bad MQTT interval number in env file"),
+                .expect("Bad MQTT interval number in env"),
         )
         .build();
 
@@ -93,8 +93,14 @@ pub async fn mqtt_net_task(stack: &'static Stack<EthDevice>) {
             }
         };
         let mut config = ClientConfig::new(MQTTv5, CountingRng(50000));
+        if mqtt_config.get_username().is_empty() {
+            config.add_username(mqtt_config.get_username())
+        };
         config.add_username(mqtt_config.get_username());
-        config.add_password(mqtt_config.get_password());
+        if !mqtt_config.get_password().is_empty() {
+            config.add_password(mqtt_config.get_password())
+        };
+        config.add_will(env!("MQTTWILLTOPIC"), b"Online", mqtt_config.get_retain());
         config.max_packet_size = 6000;
         config.keep_alive = 60000;
         config.max_packet_size = 300;
@@ -316,66 +322,3 @@ impl MqttFormat {
         json::to_string(&self)
     }
 }
-
-// let addr = match addr {
-//     Ok(addr) => addr,
-//     Err(e) => {
-//         error!("MQTT init killed, bad config {}", e);
-//         return;
-//     }
-// };
-// let nvs_config = MQTTCONFIG.lock().await;
-
-// let retain = nvs_config.retain;
-// let topic = if nvs_config.basetopic.is_none() {
-//     ""
-// } else {
-//     nvs_config.basetopic.as_ref().unwrap()
-// };
-// let client_id = if nvs_config.client_id.is_none() {
-//     "ToucanBmsGateway"
-// } else {
-//     nvs_config.client_id.as_ref().unwrap()
-// };
-
-// let mut config = ClientConfig::new(
-//     rust_mqtt::client::client_config::MqttVersion::MQTTv5,
-//     CountingRng(20000),
-// );
-
-// config.add_client_id(client_id);
-
-// if nvs_config.username.is_some() {
-//     config.add_username(nvs_config.username.as_ref().unwrap())
-// };
-// if nvs_config.password.is_some() {
-//     config.add_password(nvs_config.username.as_ref().unwrap())
-// };
-
-// let qos = match nvs_config.qos {
-//     1 => QoS1,
-//     2 => QoS2,
-//     _ => QoS0,
-// };
-
-// let interval = nvs_config.interval;
-// config.keep_alive = u16::MAX;
-// info!("connecting...");
-
-// let addr = async || -> Result<SocketAddr, StmError> {
-//     let mut nvs_config = MQTTCONFIG.lock().await;
-
-//     if nvs_config.host.is_none() {
-//         return Err(StmError::BadMqttIp);
-//     }
-//     if nvs_config.port.is_none() {
-//         nvs_config.port = Some(502)
-//     }
-//     if nvs_config.port.unwrap() > 65354 {
-//         return Err(StmError::BadMqttPort);
-//     }
-//     let ip = Ipv4Addr::from_str(nvs_config.host.as_ref().unwrap())
-//         .map_err(|_| StmError::BadMqttIp)?;
-
-//     Ok(SocketAddr::new(IpAddr::V4(ip), nvs_config.port.unwrap()))
-// };

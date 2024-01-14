@@ -41,8 +41,6 @@ lazy_static! {
     pub static ref MQTTFMT: MutexType<MqttFormat> = Mutex::new(MqttFormat::default());
 }
 
-// pub const BITTIMINGS: u32 = 0x001a0005;
-#[cfg(any(feature = "ze40", feature = "ze50", feature = "tesla_m3"))]
 pub const LAST_READING_TIMEOUT_SECS: u64 = 10; // move to config
 
 #[macro_export]

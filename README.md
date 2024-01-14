@@ -19,5 +19,4 @@ Solar Hybrid battry emulation support:
 * FoxESS V1
 * FoxESS V2 (New)
 
-  
 Individual protocol libraries are private, feel free to get in touch.

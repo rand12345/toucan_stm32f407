@@ -74,7 +74,7 @@ async fn main(spawner: Spawner) -> () {
     info!("Leds task initialized");
 
     // UARTS
-    #[cfg(feature = "modbus_gateway")]
+    #[cfg(feature = "modbus_bridge")]
     let rs485 = rs485(p.USART2, p.PD6, p.PD5, p.DMA1_CH6, p.DMA1_CH5);
 
     let can1 = can1(p.CAN1, p.PD0, p.PD1);

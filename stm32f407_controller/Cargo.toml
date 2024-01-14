@@ -15,7 +15,7 @@ name = "integration"
 harness = false
 
 [features]
-default = ["defmt"] #, "ntp"] #, "mqtt", "tcp_debug"  "modbus_bridge",] 
+default = ["defmt","ntp", "modbus_bridge", "mqtt"] #, "ntp"] #, "mqtt", "tcp_debug"  ,] 
  
 syslog = ["ntp"]
 mqtt = []
@@ -76,8 +76,6 @@ httparse = { version = "1", default-features = false, optional = true }
 
 # modbus bridge
 crc16 = { version = "0.4.0", optional = true }
-
-dotenvy_macro = "0.15.7"
 
 no-std-net = {workspace = true}
 
