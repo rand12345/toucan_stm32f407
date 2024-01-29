@@ -41,6 +41,7 @@ lazy_static! {
     pub static ref MQTTFMT: MutexType<MqttFormat> = Mutex::new(MqttFormat::default());
 }
 
+// #[cfg(feature = "modbus_bridge")]
 pub const LAST_READING_TIMEOUT_SECS: u64 = 10; // move to config
 
 #[macro_export]

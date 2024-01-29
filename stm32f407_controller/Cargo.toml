@@ -15,13 +15,14 @@ name = "integration"
 harness = false
 
 [features]
-default = ["defmt"] 
+default = ["defmt", "modbus_client"] 
  
 syslog = ["ntp"]
 mqtt = []
 ntp = ["dep:sntpc", "dep:chrono", "chrono-tz"]
 http = ["dep:httparse"]
 modbus_bridge = ["dep:crc16"]
+modbus_client = ["dep:crc16"]
 tcp_debug = []
 precharge = []
 v65 = []

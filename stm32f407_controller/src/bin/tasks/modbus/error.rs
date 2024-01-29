@@ -1,5 +1,6 @@
+#![allow(dead_code)]
 use defmt::Format;
-use embassy_net::tcp;
+use embassy_net::tcp::{self, ConnectError};
 use embassy_stm32::usart;
 
 #[derive(Debug, Format)]
@@ -14,6 +15,8 @@ pub enum ModbusError {
     ReadExactError,
     TcpRxFail(usize),
     RtuIlligal,
+    TcpConnect(ConnectError),
+    InvalidTransactionId,
 }
 impl core::error::Error for ModbusError {}
 impl core::fmt::Display for ModbusError {
@@ -29,6 +32,8 @@ impl core::fmt::Display for ModbusError {
             ModbusError::ReadExactError => write!(f, "ReadExactError error"),
             ModbusError::TcpRxFail(v) => write!(f, "TcpRxFail error {}", v),
             ModbusError::RtuIlligal => write!(f, "RtuIlligal error"),
+            ModbusError::TcpConnect(e) => write!(f, "Tcp Connect error {:?}", e),
+            ModbusError::InvalidTransactionId => write!(f, "Tcp Transaction Counter mismatch"),
         }
     }
 }
@@ -42,6 +47,12 @@ impl From<usart::Error> for ModbusError {
 impl From<tcp::Error> for ModbusError {
     fn from(_: tcp::Error) -> Self {
         ModbusError::Tcp
+    }
+}
+
+impl From<ConnectError> for ModbusError {
+    fn from(e: ConnectError) -> Self {
+        ModbusError::TcpConnect(e)
     }
 }
 
