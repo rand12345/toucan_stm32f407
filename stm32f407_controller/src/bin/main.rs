@@ -4,6 +4,7 @@
 #![feature(type_alias_impl_trait)]
 #![feature(async_closure)]
 #![feature(iter_array_chunks)]
+#![feature(generic_arg_infer)]
 extern crate alloc;
 
 use crate::types::EthDevice;

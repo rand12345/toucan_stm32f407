@@ -15,8 +15,9 @@ name = "integration"
 harness = false
 
 [features]
-default = ["defmt", "modbus_client"] 
- 
+default = ["defmt", "modbus_client"] #, "OB737"] 
+
+OB737 = []
 syslog = ["ntp"]
 mqtt = []
 ntp = ["dep:sntpc", "dep:chrono", "chrono-tz"]
