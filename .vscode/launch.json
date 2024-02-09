@@ -1,32 +1,73 @@
+// {
+//   "version": "0.2.0",
+//   "configurations": [
+//     {
+//       "preLaunchTask": "${defaultBuildTask}",
+//       "type": "probe-rs-debug",
+//       "request": "launch",
+//       "name": "probe_rs Server attach example",
+//       "chip": "STM32F407VETx",
+//       "speed": 24000,
+//       "flashingConfig": {
+//         "flashingEnabled": true,
+//         "resetAfterFlashing": true,
+//         "haltAfterReset": false
+//       },
+//       "coreConfigs": [
+//         {
+//           "coreIndex": 0,
+//           "programBinary": "target/thumbv7em-none-eabi/release/main"
+//         }
+//       ],
+//       "env": {
+//         "RUST_LOG": "debug"
+//       },
+//       "consoleLogLevel": "Console"
+//     },
+//   ]
+// }
 {
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "preLaunchTask": "", //Configure a default build task for 'cargo build'
-            "type": "probe-rs-debug",
-            "request": "launch",
-            "name": "probe_rs Server attach example",
-            "server": "127.0.0.1:50000", //!MODIFY ... can be a server that is remote from the VSCode session, but local to the probe
-            "cwd": "${workspaceFolder}",
-            "speed": 24000, //!MODIFY (or remove)
-            "chip": "STM32F407VETx", //!MODIFY
-            // "probe": "VID:PID:<Serial>", //!MODIFY (or remove)
-            "flashingConfig": {
-                "flashingEnabled": true,
-                "resetAfterFlashing": true,
-                "haltAfterReset": false
-            },
-            "coreConfigs": [
-                {
-                    "coreIndex": 0,
-                    "programBinary": "target/thumbv7em-none-eabi/release/main", //!MODIFY
-                    // "svdFile": "svd" //!MODIFY
-                }
-            ],
-            "env": {
-                "RUST_LOG": "debug"
-            }, //!This won't take effect. Please set environment variables before launching `probe-rs-debugger`.
-            "consoleLogLevel": "Console" //Info, Debug
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "probe-rs-debug",
+      "request": "launch",
+      "name": "probe_rs Executable launch example",
+      "cwd": "${workspaceFolder}",
+      //!MODIFY (or remove)
+      "speed": 24000,
+      //!MODIFY (or remove)
+      "probe": "0483:3748:162016092416303030303032",
+      "runtimeExecutable": "probe-rs",
+      "runtimeArgs": [
+        "dap-server"
+      ],
+      //!MODIFY
+      "chip": "STM32F407VETx",
+      "flashingConfig": {
+        "flashingEnabled": true,
+        "haltAfterReset": false,
+        "formatOptions": {
+          //!MODIFY (or remove). Valid values are: 'bin', 'hex', 'elf'(default), 'idf'
+          "format": "elf"
         }
-    ]
+      },
+      "coreConfigs": [
+        {
+          "coreIndex": 0,
+          //!MODIFY
+          "programBinary": "/Users/dgau/git_temp/toucan_stm32f407/target/thumbv7em-none-eabi/debug/main",
+          //!MODIFY
+          "svdFile": "STM32F407.svd"
+        }
+      ],
+      "env": {
+        //!MODIFY (or remove)
+        // If you set this variable, check the VSCode console log window for the location of the log file.
+        "RUST_LOG": "info"
+      },
+      // Info, Debug
+      "consoleLogLevel": "Console"
+    }
+  ]
 }

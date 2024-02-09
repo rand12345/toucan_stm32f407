@@ -21,6 +21,7 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
+      MODBUS_REMOTE: "123.123.123.123:502"
       MQTTHOST: "91.121.93.94"
       MQTTPORT: 1883
       MQTTCLIENTID: "Client_${{ github.run_id }}"

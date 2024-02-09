@@ -49,7 +49,7 @@ pub use can_processors_pylontech_forceh2::inverter_rx;
 
 pub mod leds;
 
-#[cfg(feature = "modbus_bridge")]
+#[cfg(any(feature = "modbus_bridge", feature = "modbus_client"))]
 pub mod modbus;
 
 #[cfg(feature = "mqtt")]

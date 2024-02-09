@@ -27,6 +27,15 @@ pub fn exit() -> ! {
 #[defmt_test::tests]
 #[cfg(test)]
 mod unit_tests {
+
+    // #[test]
+    // #[cfg(feature = "modbus_bridge")]
+    // fn test_modbus_bridge() {
+    //     use crate::tasks::modbus::{RtuData, TcpData};
+    //     let modbus_rtu = RtuData::new();
+    //     let modbus_tcp = TcpData::new();
+    // }
+
     use bms_standard::*;
     use defmt::assert;
     use defmt::assert_eq;

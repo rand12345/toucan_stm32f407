@@ -92,7 +92,7 @@ pub fn spi3(p: SPI3, sck: PB3, mosi: PC12, miso: PB4) -> Spi<'static, SPI3, NoDm
     Spi::new(p, sck, mosi, miso, NoDma, NoDma, config)
 }
 
-#[cfg(feature = "modbus_bridge")]
+#[cfg(any(feature = "modbus_bridge", feature = "modbus_client"))]
 pub fn rs485(
     p: USART2,
     rx_pin: PD6,
