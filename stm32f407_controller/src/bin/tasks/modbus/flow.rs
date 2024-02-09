@@ -98,7 +98,7 @@ mod ob737 {
                 return Err(ModbusError::InvalidFilter);
             }
 
-            // Fudge, will require two requests to get full dataset of powers and reactive
+            // Will require two requests to get full dataset of powers and reactive
             // this is due to the spread of modbus registers, they cannot all be called in
             // one request.
             // Data requests from Fox are high frequency so this should not be a problem.
@@ -149,7 +149,6 @@ mod ob737 {
                 }
                 _ => {
                     defmt::error!("Response from OM737 is unexpected: {:02x}", input);
-                    // if error, return error
                     return Ok(input);
                 }
             }
