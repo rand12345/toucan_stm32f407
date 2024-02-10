@@ -1,24 +1,25 @@
+use crate::statics::{BMS, MQTTCONFIG};
+use crate::types::{Spi2Display, Spi2Interface};
 use embassy_embedded_hal::shared_bus::asynch::spi::SpiDeviceWithConfig;
-use embassy_stm32::gpio::Pin;
 use embassy_stm32::{
-    gpio::{Level, Output, Speed},
+    gpio::{Level, Output, Pin, Speed},
     peripherals::{PE7, PE8, PE9},
     spi,
 };
-use embassy_time::Delay;
+use embassy_time::{Delay, Duration, Ticker};
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyleBuilder},
     pixelcolor::Rgb565,
     prelude::*,
     text::*,
 };
+use st7735_embassy::ST7735;
 use static_cell::StaticCell;
-
-use crate::statics::{BMS, MQTTCONFIG};
-use crate::types::{Spi2Display, Spi2Interface};
 
 #[embassy_executor::task]
 pub async fn display_task(spi: Spi2Interface<'static>, dc: PE8, d_cs: PE9, rst: PE7) {
+    use core::fmt::Write;
+    use Alignment::*;
     let dc = Output::new(dc.degrade(), Level::High, Speed::VeryHigh);
     let display_cs = Output::new(d_cs.degrade(), Level::High, Speed::VeryHigh);
     let rst = Output::new(rst.degrade(), Level::High, Speed::VeryHigh);
@@ -29,91 +30,105 @@ pub async fn display_task(spi: Spi2Interface<'static>, dc: PE8, d_cs: PE9, rst: 
     let spi_bus = embassy_sync::mutex::Mutex::new(spi);
     let spi_bus = SPI_BUS.init(spi_bus);
     let spi_display = SpiDeviceWithConfig::new(spi_bus, display_cs, display_config);
-    let mut display =
-        st7735_embassy::ST7735::new(spi_display, dc, rst, Default::default(), 160, 131);
-    display.init(&mut Delay).await.unwrap();
-    display.clear(Rgb565::BLACK).unwrap();
+    let mut display = ST7735::new(spi_display, dc, rst, Default::default(), 160, 131);
+    display
+        .init(&mut Delay)
+        .await
+        .expect("Display failed to initialise");
+    display.clear(Rgb565::BLACK).expect("Clear fail");
 
     let bounding_box = display.bounding_box();
-    let character_style = MonoTextStyleBuilder::new()
+    let mut character_style = MonoTextStyleBuilder::new()
         .font(&FONT_8X13)
-        .text_color(Rgb565::RED)
+        .text_color(Rgb565::WHITE)
         .background_color(Rgb565::BLACK)
         .build();
 
-    let left_aligned = TextStyleBuilder::new()
-        .alignment(Alignment::Left)
-        .baseline(Baseline::Top)
-        .build();
-
-    let center_aligned = TextStyleBuilder::new()
-        .alignment(Alignment::Center)
-        .baseline(Baseline::Middle)
-        .build();
-
-    let right_aligned = TextStyleBuilder::new()
-        .alignment(Alignment::Right)
-        .baseline(Baseline::Bottom)
-        .build();
-
-    // Text::with_text_style(
-    //     "Left aligned text, origin top left",
-    //     bounding_box.top_left,
-    //     character_style,
-    //     left_aligned,
-    // )
-    // .draw(&mut display)
-    // .unwrap();
-
-    // Text::with_text_style(
-    //     "Center aligned text, origin center center",
-    //     bounding_box.center(),
-    //     character_style,
-    //     center_aligned,
-    // )
-    // .draw(&mut display)
-    // .unwrap();
-
-    // Text::with_text_style(
-    //     "Right aligned text, origin bottom right",
-    //     bounding_box.bottom_right().unwrap(),
-    //     character_style,
-    //     right_aligned,
-    // )
-    // .draw(&mut display)
-    // .unwrap();
-
-    // display.flush().await.unwrap();
-    let mut counter = 0u32;
-    let mut s = heapless::String::<128>::new();
-    use core::fmt::Write;
-
+    let mut s = heapless::String::<20>::new();
+    let ticker = Ticker::every(Duration::from_secs(5));
     loop {
-        let mut display_line = |s: &str, l: i32| {
+        let mut format_line = |s: &str, l: i32, j: Alignment| {
+            let alignment = TextStyleBuilder::new()
+                .alignment(j)
+                .baseline(Baseline::Top)
+                .build();
             Text::with_text_style(
                 s,
                 bounding_box.top_left + Point::new(0, l * 14),
                 character_style,
-                left_aligned,
+                alignment,
             )
             .draw(&mut display)
             .unwrap();
         };
+        ticker.next().await;
         let data: DisplayFormat = (*BMS.lock().await).into();
-        embassy_time::Timer::after_secs(1).await;
-        counter += 1;
+
+        // Background red if data not valid
+        if !data.valid {
+            character_style = MonoTextStyleBuilder::new()
+                .font(&FONT_8X13)
+                .text_color(Rgb565::WHITE)
+                .background_color(Rgb565::RED)
+                .build();
+        } else if character_style.background_color == Some(Rgb565::RED) {
+            character_style = MonoTextStyleBuilder::new()
+                .font(&FONT_8X13)
+                .text_color(Rgb565::WHITE)
+                .background_color(Rgb565::BLACK)
+                .build();
+        }
+        let lines: [[&str; 2]; 8] = [
+            ["SoC ", write!(s.clone(), "{:.1}%", data.soc)],
+            ["Remaining ", write!(s.clone(), "{:.1}kWh", data.kwh)],
+            ["Voltage", write!(s, "{:.1}V", data.volts)],
+            [
+                "Cell Temps ",
+                write!(s, "{:.1}/{:.1}°C", data.cell_temp_high, data.cell_temp_low),
+            ],
+            ["Cell V High ", write!(s, "{}mV", data.cell_mv_high)],
+            ["Cell V Low ", write!(s, "{}mV", data.cell_mv_low)],
+            ["Current ", write!(s, "{:.1}A", data.amps)],
+            ["Balancing ", write!(s, "{}", data.bal)],
+        ];
+        for (i, line) in lines.iter().enumerate() {
+            format_line(line[0], i as i32, Left);
+            format_line(line[1], i as i32, Right);
+        }
+        /*
+        format_line("SoC:", 0, Left); //9x20
         s.clear();
-        let _ = write!(s, "C: {}", data.amps);
-        defmt::info!("{}", s);
-        display_line("123456789,123456789,", 0); //8x20
-        display_line("1", 1);
-        display_line("2", 2);
-        display_line("3", 3);
-        display_line("4", 4);
-        display_line("5", 5);
-        display_line("6", 6);
-        display_line("7", 7);
-        display_line("8", 8);
+        let _ = write!(s, "{:.1}%", data.soc);
+        format_line(&s, 0, Right);
+        format_line("Remaining", 1, Left);
+        s.clear();
+        let _ = write!(s, "{:.1}kWh", data.kwh);
+        format_line(&s, 1, Right);
+        format_line("Voltage", 2, Left);
+        s.clear();
+        let _ = write!(s, "{:.1}V", data.volts);
+        format_line(&s, 2, Right);
+        format_line("Cell Temps ", 3, Left);
+        s.clear();
+        let _ = write!(s, "{:.1}/{:.1}°C", data.cell_temp_high, data.cell_temp_low);
+        format_line(&s, 3, Right);
+        format_line("Cell V High ", 4, Left);
+        s.clear();
+        let _ = write!(s, "{}mV", data.cell_mv_high);
+        format_line(&s, 4, Right);
+        format_line("Cell V Low ", 5, Left);
+        s.clear();
+        let _ = write!(s, "{}mV", data.cell_mv_low);
+        format_line(&s, 5, Right);
+        format_line("Current ", 6, Left);
+        s.clear();
+        let _ = write!(s, "{:.1}A", data.amps);
+        format_line(&s, 6, Right);
+        format_line("Balancing ", 7, Left);
+        s.clear();
+        let _ = write!(s, "{}", data.bal);
+        format_line(&s, 7, Right);
+         */
         display.flush().await.unwrap();
     }
 }
@@ -126,12 +141,6 @@ pub struct DisplayFormat {
     cell_mv_low: u16,
     cell_temp_high: f32,
     cell_temp_low: f32,
-    // #[serde(with = "BigArray")]
-    // #[serde(skip)]
-    // cells_millivolts: [u16; 96],
-    // #[serde(skip)]
-    // #[serde(with = "BigArray")]
-    // cell_balance: [bool; 96],
     amps: f32,
     kwh: f32,
     charge: f32,
