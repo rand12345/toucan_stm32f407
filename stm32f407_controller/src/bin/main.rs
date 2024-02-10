@@ -4,6 +4,7 @@
 #![feature(type_alias_impl_trait)]
 #![feature(async_closure)]
 #![feature(iter_array_chunks)]
+#![feature(generic_arg_infer)]
 extern crate alloc;
 use crate::types::EthDevice;
 use defmt::{debug, info, unwrap};
@@ -86,7 +87,7 @@ async fn main(spawner: Spawner) -> () {
         )));
     }
     // UARTS
-    #[cfg(feature = "modbus_bridge")]
+    #[cfg(any(feature = "modbus_bridge", feature = "modbus_client"))]
     let rs485 = rs485(p.USART2, p.PD6, p.PD5, p.DMA1_CH6, p.DMA1_CH5);
 
     let can1 = can1(p.CAN1, p.PD0, p.PD1);
@@ -203,7 +204,7 @@ async fn main(spawner: Spawner) -> () {
     #[cfg(feature = "mqtt")]
     unwrap!(spawner.spawn(tasks::mqtt::mqtt_net_task(stack)));
 
-    #[cfg(feature = "modbus_bridge")]
+    #[cfg(any(feature = "modbus_bridge", feature = "modbus_client"))]
     unwrap!(spawner.spawn(tasks::modbus::modbus_task(stack, rs485, p.PD7)));
 
     loop {

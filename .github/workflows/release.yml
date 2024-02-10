@@ -31,6 +31,7 @@ jobs:
       NTPSERVER: "216.40.34.37:123"
       TIMEZONE: "Europe/London"
       UNIQUE_NAME: ""
+      MODBUS_REMOTE: "1.2.3.4:502"
 
     steps:
     - uses: actions/checkout@v3
