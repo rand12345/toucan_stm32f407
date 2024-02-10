@@ -82,7 +82,7 @@ httparse = { version = "1", default-features = false, optional = true }
 # rand_core = {version = "0.6.4", default-features = false}
 
 #display
-st7735-embassy = {git = "https://github.com/kalkyl/st7735-embassy", optional = true}
+st7735-embassy = {git = "ssh://git@github.com/rand12345/st7735-embassy.git", optional = true}
 embedded-graphics = {version = "0.8.1", optional = true}
 
 # modbus bridge
