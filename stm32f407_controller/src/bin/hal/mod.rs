@@ -89,25 +89,14 @@ pub fn spi2(
     )
 }
 
-// #[cfg(feature = "spi")]
-// pub fn spi_display(
-//     spi: SPI2,
-//     cs: PB12,
-//     dc: PB13,
-//     rst: PB14,
-//     // ) -> Spi<'static, SPI2, DMA1_CH0, DMA1_CH1> {
-// ) -> Spi2Display {
-//     SpiDevice::new(spi, cs)
-// }
-
-// #[cfg(feature = "spi")]
-// use embassy_stm32::dma::NoDma;
-// #[cfg(feature = "spi")]
-// pub fn spi3(p: SPI3, sck: PB3, mosi: PC12, miso: PB4) -> Spi<'static, SPI3, NoDma, NoDma> {
-//     let mut config = embassy_stm32::spi::Config::default();
-//     config.frequency = Hertz(1_000_000);
-//     Spi::new(p, sck, mosi, miso, NoDma, NoDma, config)
-// }
+#[cfg(feature = "spi3")]
+use embassy_stm32::dma::NoDma;
+#[cfg(feature = "spi3")]
+pub fn spi3(p: SPI3, sck: PB3, mosi: PC12, miso: PB4) -> Spi<'static, SPI3, NoDma, NoDma> {
+    let mut config = embassy_stm32::spi::Config::default();
+    config.frequency = Hertz(1_000_000);
+    Spi::new(p, sck, mosi, miso, NoDma, NoDma, config)
+}
 
 #[cfg(feature = "modbus_bridge")]
 pub fn rs485(
