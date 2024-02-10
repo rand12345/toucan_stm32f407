@@ -1,10 +1,12 @@
 #![allow(unused_imports)]
 use cortex_m::peripheral;
+use embassy_embedded_hal::shared_bus::asynch::spi::SpiDevice;
 use embassy_net::Stack;
 use embassy_stm32::{
     bind_interrupts,
     can::{Can, Rx0InterruptHandler, Rx1InterruptHandler, SceInterruptHandler, TxInterruptHandler},
     eth::{self, generic_smi::GenericSMI, Ethernet, PacketQueue},
+    gpio::{AnyPin, Output},
     peripherals::{self, *},
     rcc,
     rng::{self, Rng},
@@ -14,8 +16,10 @@ use embassy_stm32::{
     usart,
 };
 
+use embassy_sync::blocking_mutex::raw::ThreadModeRawMutex;
 use static_cell::StaticCell;
 
+use crate::types::Spi2Display;
 use crate::{
     statics,
     types::{EthDevice, Usart6Type, RS232, RS485},
@@ -66,31 +70,83 @@ pub async fn net_task(stack: &'static Stack<EthDevice>) -> ! {
     stack.run().await
 }
 
-#[cfg(feature = "nvs")]
-pub fn spi2(p: &Peripherals) -> Spi<'static, SPI2, DMA1_CH0, DMA1_CH1> {
+use embassy_stm32::dma::NoDma;
+#[cfg(feature = "spi")]
+pub fn spi2(
+    peri: SPI2,
+    sck: PB10,
+    mosi: PC3,
+    miso: Option<PC2>,
+    // ) -> Spi<'static, SPI2, DMA1_CH0, DMA1_CH1> {
+) -> Spi<'static, SPI2, NoDma, NoDma> {
     let mut config = embassy_stm32::spi::Config::default();
-    config.frequency = 40_000_000;
+    config.frequency = embassy_stm32::time::Hertz(1_000_000);
     // config.mode = embassy_stm32::spi::Mode {
     //     polarity: embassy_stm32::spi::Polarity::IdleHigh,
     //     phase: embassy_stm32::spi::Phase::CaptureOnSecondTransition,
     // };
-
-    Spi::new(
-        p.SPI2, p.PB10, //clk
-        p.PC3,  // mosi
-        p.PC2,  //miso
-        p.DMA1_CH0, p.DMA1_CH1, config,
-    )
+    match miso {
+        Some(_) => Spi::new(
+            peri,
+            sck,           //clk
+            mosi,          // mosi
+            miso.unwrap(), //miso
+            NoDma,
+            NoDma,
+            config,
+        ),
+        None => Spi::new_txonly(peri, sck, mosi, NoDma, NoDma, config), // display
+    }
 }
-
 #[cfg(feature = "spi")]
-use embassy_stm32::dma::NoDma;
-#[cfg(feature = "spi")]
-pub fn spi3(p: SPI3, sck: PB3, mosi: PC12, miso: PB4) -> Spi<'static, SPI3, NoDma, NoDma> {
+pub fn spi2_old(
+    peri: SPI2,
+    sck: PB10,
+    mosi: PC3,
+    miso: Option<PC2>,
+    txdma: DMA1_CH4,
+    rxdma: DMA1_CH3,
+    // ) -> Spi<'static, SPI2, DMA1_CH0, DMA1_CH1> {
+) -> Spi<'static, SPI2, DMA1_CH4, DMA1_CH3> {
     let mut config = embassy_stm32::spi::Config::default();
-    config.frequency = Hertz(1_000_000);
-    Spi::new(p, sck, mosi, miso, NoDma, NoDma, config)
+    config.frequency = embassy_stm32::time::Hertz(1_000_000);
+    // config.mode = embassy_stm32::spi::Mode {
+    //     polarity: embassy_stm32::spi::Polarity::IdleHigh,
+    //     phase: embassy_stm32::spi::Phase::CaptureOnSecondTransition,
+    // };
+    match miso {
+        Some(_) => Spi::new(
+            peri,
+            sck,           //clk
+            mosi,          // mosi
+            miso.unwrap(), //miso
+            txdma,
+            rxdma,
+            config,
+        ),
+        None => Spi::new_txonly(peri, sck, mosi, txdma, rxdma, config), // display
+    }
 }
+
+// #[cfg(feature = "spi")]
+// pub fn spi_display(
+//     spi: SPI2,
+//     cs: PB12,
+//     dc: PB13,
+//     rst: PB14,
+//     // ) -> Spi<'static, SPI2, DMA1_CH0, DMA1_CH1> {
+// ) -> Spi2Display {
+//     SpiDevice::new(spi, cs)
+// }
+
+// #[cfg(feature = "spi")]
+// use embassy_stm32::dma::NoDma;
+// #[cfg(feature = "spi")]
+// pub fn spi3(p: SPI3, sck: PB3, mosi: PC12, miso: PB4) -> Spi<'static, SPI3, NoDma, NoDma> {
+//     let mut config = embassy_stm32::spi::Config::default();
+//     config.frequency = Hertz(1_000_000);
+//     Spi::new(p, sck, mosi, miso, NoDma, NoDma, config)
+// }
 
 #[cfg(feature = "modbus_bridge")]
 pub fn rs485(

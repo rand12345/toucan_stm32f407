@@ -7,14 +7,28 @@
 extern crate alloc;
 
 use crate::types::EthDevice;
+
 use defmt::{debug, info, unwrap};
+use embassy_embedded_hal::shared_bus::asynch::spi::SpiDeviceWithConfig;
 use embassy_executor::*;
 use embassy_net::{Stack, StackResources};
 use embassy_stm32::{
+    // dma::*,
     gpio::{Level, Output, Speed},
-    peripherals::ETH,
+    peripherals::*,
 };
+use embassy_time::Delay;
 use embedded_alloc::Heap;
+use embedded_graphics::{
+    geometry::{Dimensions, Point},
+    mono_font::{
+        ascii::{FONT_6X10, FONT_8X13},
+        MonoTextStyle, MonoTextStyleBuilder,
+    },
+    pixelcolor::RgbColor,
+    text::{Alignment, Baseline, Text, TextStyleBuilder},
+    Drawable,
+};
 use hal::*;
 use static_cell::StaticCell;
 
@@ -74,6 +88,27 @@ async fn main(spawner: Spawner) -> () {
     defmt::unwrap!(spawner.spawn(crate::tasks::leds::led_task(leds)));
     info!("Leds task initialized");
 
+    #[cfg(all(feature = "spi", feature = "display"))]
+    {
+        use embassy_stm32::spi;
+        //sck: PB3, mosi: PC12, miso: PB4
+        // let dc = Output::new(p.PE8.degrade(), Level::High, Speed::VeryHigh);
+        // let display_cs = Output::new(p.PE9.degrade(), Level::High, Speed::VeryHigh);
+        // let rst = Output::new(p.PE7.degrade(), Level::High, Speed::VeryHigh);
+
+        // let mut display_config = spi::Config::default();
+        // display_config.frequency = embassy_stm32::time::Hertz(6_000_000);
+
+        let mut spi_config = spi::Config::default();
+        spi_config.frequency = embassy_stm32::time::Hertz(36_000_000);
+
+        let spi = spi::Spi::new(
+            p.SPI2, p.PB10, p.PC3, p.PC2, p.DMA1_CH4, p.DMA1_CH3, spi_config,
+        );
+        defmt::unwrap!(spawner.spawn(crate::tasks::display::display_task(
+            spi, p.PE8, p.PE9, p.PE7
+        )));
+    }
     // UARTS
     #[cfg(feature = "modbus_bridge")]
     let rs485 = rs485(p.USART2, p.PD6, p.PD5, p.DMA1_CH6, p.DMA1_CH5);

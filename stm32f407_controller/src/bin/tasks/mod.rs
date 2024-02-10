@@ -14,6 +14,9 @@ use crate::statics::CONTACTOR_STATE;
 
 pub mod can_interfaces;
 
+#[cfg(feature = "display")]
+pub mod display;
+
 #[cfg(feature = "tcp_debug")]
 pub mod tcp_debug;
 
