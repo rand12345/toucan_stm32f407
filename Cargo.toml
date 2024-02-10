@@ -46,13 +46,14 @@ opt-level = 3
 overflow-checks = false  
 
 [workspace.dependencies]
-embassy-stm32    = { version = "0.1.0", git = "https://github.com/embassy-rs/embassy.git", rev = "6ff0e4bcf5fbcccd8ae52cc83be7ed9f83b66fde", features = [ "defmt", "stm32f407ve", "unstable-pac", "memory-x", "time-driver-any", "exti", "chrono"]  }
-embassy-sync     = { version = "0.5.0", git = "https://github.com/embassy-rs/embassy.git", rev = "6ff0e4bcf5fbcccd8ae52cc83be7ed9f83b66fde", features = ["defmt"] }
-embassy-executor = { version = "0.5.0", git = "https://github.com/embassy-rs/embassy.git", rev = "6ff0e4bcf5fbcccd8ae52cc83be7ed9f83b66fde", features = ["arch-cortex-m", "executor-thread", "executor-interrupt", "defmt", "integrated-timers", "nightly"] }
-embassy-time     = { version = "0.3.0", git = "https://github.com/embassy-rs/embassy.git", rev = "6ff0e4bcf5fbcccd8ae52cc83be7ed9f83b66fde", features = ["defmt", "defmt-timestamp-uptime", "tick-hz-32_768"] }
-embassy-usb      = { version = "0.1.0", git = "https://github.com/embassy-rs/embassy.git", rev = "6ff0e4bcf5fbcccd8ae52cc83be7ed9f83b66fde", features = ["defmt" ] }
-embassy-net      = { version = "0.4.0", git = "https://github.com/embassy-rs/embassy.git", rev = "6ff0e4bcf5fbcccd8ae52cc83be7ed9f83b66fde", features = ["defmt", "tcp", "udp", "dhcpv4", "medium-ethernet", "proto-ipv4"] }
-embassy-futures  = { version = "^0" ,   git = "https://github.com/embassy-rs/embassy.git", rev = "6ff0e4bcf5fbcccd8ae52cc83be7ed9f83b66fde" }
+embassy-stm32         = { version = "0.1.0", git = "https://github.com/embassy-rs/embassy.git", rev = "6ff0e4bcf5fbcccd8ae52cc83be7ed9f83b66fde", features = [ "defmt", "stm32f407ve", "unstable-pac", "memory-x", "time-driver-any", "exti", "chrono"]  }
+embassy-sync          = { version = "0.5.0", git = "https://github.com/embassy-rs/embassy.git", rev = "6ff0e4bcf5fbcccd8ae52cc83be7ed9f83b66fde", features = ["defmt"] }
+embassy-executor      = { version = "0.5.0", git = "https://github.com/embassy-rs/embassy.git", rev = "6ff0e4bcf5fbcccd8ae52cc83be7ed9f83b66fde", features = ["arch-cortex-m", "executor-thread", "executor-interrupt", "defmt", "integrated-timers", "nightly"] }
+embassy-time          = { version = "0.3.0", git = "https://github.com/embassy-rs/embassy.git", rev = "6ff0e4bcf5fbcccd8ae52cc83be7ed9f83b66fde", features = ["defmt", "defmt-timestamp-uptime", "tick-hz-32_768"] }
+embassy-usb           = { version = "0.1.0", git = "https://github.com/embassy-rs/embassy.git", rev = "6ff0e4bcf5fbcccd8ae52cc83be7ed9f83b66fde", features = ["defmt" ] }
+embassy-net           = { version = "0.4.0", git = "https://github.com/embassy-rs/embassy.git", rev = "6ff0e4bcf5fbcccd8ae52cc83be7ed9f83b66fde", features = ["defmt", "tcp", "udp", "dhcpv4", "medium-ethernet", "proto-ipv4"] }
+embassy-futures       = { version = "^0" ,   git = "https://github.com/embassy-rs/embassy.git", rev = "6ff0e4bcf5fbcccd8ae52cc83be7ed9f83b66fde" }
+embassy-embedded-hal  = { version = "^0" ,   git = "https://github.com/embassy-rs/embassy.git", rev = "6ff0e4bcf5fbcccd8ae52cc83be7ed9f83b66fde" }
 
 defmt        = { version = "0.3" }
 no-std-net   = { version = "0.6.0" }

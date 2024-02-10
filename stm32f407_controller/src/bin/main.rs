@@ -6,14 +6,13 @@
 #![feature(iter_array_chunks)]
 #![feature(generic_arg_infer)]
 extern crate alloc;
-
 use crate::types::EthDevice;
 use defmt::{debug, info, unwrap};
 use embassy_executor::*;
 use embassy_net::{Stack, StackResources};
 use embassy_stm32::{
     gpio::{Level, Output, Speed},
-    peripherals::ETH,
+    peripherals::*,
 };
 use embedded_alloc::Heap;
 use hal::*;
@@ -75,6 +74,18 @@ async fn main(spawner: Spawner) -> () {
     defmt::unwrap!(spawner.spawn(crate::tasks::leds::led_task(leds)));
     info!("Leds task initialized");
 
+    #[cfg(all(feature = "spi", feature = "display"))]
+    {
+        use embassy_stm32::spi;
+        let mut spi_config = spi::Config::default();
+        spi_config.frequency = embassy_stm32::time::Hertz(36_000_000);
+        defmt::unwrap!(spawner.spawn(crate::tasks::display::display_task(
+            spi2(p.SPI2, p.PB10, p.PC3, p.PC2, p.DMA1_CH4, p.DMA1_CH3),
+            p.PE8,
+            p.PE9,
+            p.PE7
+        )));
+    }
     // UARTS
     #[cfg(any(feature = "modbus_bridge", feature = "modbus_client"))]
     let rs485 = rs485(p.USART2, p.PD6, p.PD5, p.DMA1_CH6, p.DMA1_CH5);

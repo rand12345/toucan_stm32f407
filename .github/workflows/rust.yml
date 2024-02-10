@@ -43,6 +43,8 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
     - name: Add build target
       run: rustup target add thumbv7em-none-eabi
+    - name: Build all IO options
+      run: cargo build --release --features "spi display ntp mqtt modbus_client"
     - name: Build ze40 -> FoxESS
       run: cargo build --release --features "ze40 foxess ntp mqtt modbus_bridge"
     - name: Build ze40 -> Solax

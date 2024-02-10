@@ -17,6 +17,8 @@ harness = false
 [features]
 default = ["defmt"] 
 
+display = ["dep:st7735-embassy", "dep:embedded-graphics"]
+spi = []
 syslog = ["ntp"]
 mqtt = []
 ntp = ["dep:sntpc", "dep:chrono", "chrono-tz"]
@@ -52,6 +54,7 @@ embassy-time.workspace = true
 embassy-usb.workspace = true
 embassy-net.workspace = true
 embassy-futures.workspace = true
+embassy-embedded-hal.workspace = true
 
 futures = { version = "0.3.17", default-features = false, features = [
     "async-await",
@@ -77,6 +80,10 @@ miniserde = {version = "^0", default-features = false}
 #http
 httparse = { version = "1", default-features = false, optional = true } 
 # rand_core = {version = "0.6.4", default-features = false}
+
+#display
+st7735-embassy = {git = "ssh://git@github.com/rand12345/st7735-embassy.git", optional = true}
+embedded-graphics = {version = "0.8.1", optional = true}
 
 # modbus bridge
 crc16 = { version = "0.4.0", optional = true }
