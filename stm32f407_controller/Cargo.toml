@@ -15,7 +15,7 @@ name = "integration"
 harness = false
 
 [features]
-default = ["defmt", "spi", "display"] 
+default = ["defmt"] 
 
 display = ["dep:st7735-embassy", "dep:embedded-graphics"]
 spi = []

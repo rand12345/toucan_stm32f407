@@ -1,9 +1,11 @@
 #![allow(dead_code)]
 
 use crate::ETH;
+#[cfg(all(feature = "spi", feature = "display"))]
 use embassy_embedded_hal::shared_bus::asynch::spi::SpiDeviceWithConfig;
 use embassy_net::Stack;
 use embassy_stm32::eth::generic_smi::GenericSMI;
+#[cfg(all(feature = "spi", feature = "display"))]
 use embassy_stm32::gpio::{AnyPin, Output};
 
 use embassy_stm32::usart::Uart;
@@ -37,6 +39,8 @@ pub type Usart6Type<'a> = Uart<'a, USART6, DMA2_CH7, DMA2_CH2>;
 pub type Spi2Interface<'a> = spi::Spi<'a, embassy_stm32::peripherals::SPI2, DMA1_CH4, DMA1_CH3>;
 pub type Spi2Display<'a> =
     embassy_sync::mutex::Mutex<embassy_sync::blocking_mutex::raw::NoopRawMutex, Spi2Interface<'a>>;
+
+#[cfg(all(feature = "spi", feature = "display"))]
 pub type DisplayType<'a> = st7735_embassy::ST7735<
     SpiDeviceWithConfig<
         'a,
