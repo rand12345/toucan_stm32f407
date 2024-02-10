@@ -1,11 +1,11 @@
 #![allow(dead_code)]
 
 use crate::ETH;
-use embassy_embedded_hal::shared_bus::asynch::spi::{SpiDevice, SpiDeviceWithConfig};
+use embassy_embedded_hal::shared_bus::asynch::spi::SpiDeviceWithConfig;
 use embassy_net::Stack;
 use embassy_stm32::eth::generic_smi::GenericSMI;
 use embassy_stm32::gpio::{AnyPin, Output};
-use embassy_stm32::spi::Spi;
+
 use embassy_stm32::usart::Uart;
 use embassy_stm32::{can::bxcan::Frame, eth::Ethernet};
 use embassy_stm32::{peripherals::*, spi};

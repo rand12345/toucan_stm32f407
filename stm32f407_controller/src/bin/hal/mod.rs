@@ -70,62 +70,23 @@ pub async fn net_task(stack: &'static Stack<EthDevice>) -> ! {
     stack.run().await
 }
 
-use embassy_stm32::dma::NoDma;
 #[cfg(feature = "spi")]
 pub fn spi2(
     peri: SPI2,
     sck: PB10,
     mosi: PC3,
-    miso: Option<PC2>,
-    // ) -> Spi<'static, SPI2, DMA1_CH0, DMA1_CH1> {
-) -> Spi<'static, SPI2, NoDma, NoDma> {
-    let mut config = embassy_stm32::spi::Config::default();
-    config.frequency = embassy_stm32::time::Hertz(1_000_000);
-    // config.mode = embassy_stm32::spi::Mode {
-    //     polarity: embassy_stm32::spi::Polarity::IdleHigh,
-    //     phase: embassy_stm32::spi::Phase::CaptureOnSecondTransition,
-    // };
-    match miso {
-        Some(_) => Spi::new(
-            peri,
-            sck,           //clk
-            mosi,          // mosi
-            miso.unwrap(), //miso
-            NoDma,
-            NoDma,
-            config,
-        ),
-        None => Spi::new_txonly(peri, sck, mosi, NoDma, NoDma, config), // display
-    }
-}
-#[cfg(feature = "spi")]
-pub fn spi2_old(
-    peri: SPI2,
-    sck: PB10,
-    mosi: PC3,
-    miso: Option<PC2>,
+    miso: PC2,
     txdma: DMA1_CH4,
     rxdma: DMA1_CH3,
-    // ) -> Spi<'static, SPI2, DMA1_CH0, DMA1_CH1> {
 ) -> Spi<'static, SPI2, DMA1_CH4, DMA1_CH3> {
     let mut config = embassy_stm32::spi::Config::default();
-    config.frequency = embassy_stm32::time::Hertz(1_000_000);
-    // config.mode = embassy_stm32::spi::Mode {
-    //     polarity: embassy_stm32::spi::Polarity::IdleHigh,
-    //     phase: embassy_stm32::spi::Phase::CaptureOnSecondTransition,
-    // };
-    match miso {
-        Some(_) => Spi::new(
-            peri,
-            sck,           //clk
-            mosi,          // mosi
-            miso.unwrap(), //miso
-            txdma,
-            rxdma,
-            config,
-        ),
-        None => Spi::new_txonly(peri, sck, mosi, txdma, rxdma, config), // display
-    }
+    config.frequency = embassy_stm32::time::Hertz(36_000_000);
+    Spi::new(
+        peri, sck,  //clk
+        mosi, // mosi
+        miso, //miso
+        txdma, rxdma, config,
+    )
 }
 
 // #[cfg(feature = "spi")]
