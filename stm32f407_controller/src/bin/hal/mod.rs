@@ -23,7 +23,6 @@ use crate::types::Spi2Display;
 use crate::{
     statics,
     types::{EthDevice, Usart6Type, RS232, RS485},
-    MAC_ADDR,
 };
 
 pub fn peripherals_config() -> embassy_stm32::Config {
@@ -221,8 +220,10 @@ pub async fn get_eth(
     // let _ = rng.async_fill_bytes(&mut seed).await;
     let seed = u64::from_le_bytes(seed);
     static PACKETS: StaticCell<PacketQueue<4, 4>> = StaticCell::new();
-
-    // let seed = u64::from_le_bytes(seed);
+    let mut mac_addr: [u8; 6] = embassy_stm32::uid::uid()[6..12]
+        .try_into()
+        .expect("MAC address from UID failed");
+    mac_addr[0] &= 0xfe; // Clear multicast bit.
     let eth = Ethernet::new(
         PACKETS.init(PacketQueue::<4, 4>::new()),
         p,
@@ -237,7 +238,7 @@ pub async fn get_eth(
         tx_d1,
         tx_en, //tx_en
         GenericSMI::new(1),
-        MAC_ADDR,
+        mac_addr,
     );
     let netconfig = { statics::NETCONFIG.lock().await.get_config() };
 

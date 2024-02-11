@@ -1,59 +1,46 @@
-use crate::config::JsonTrait;
+use crate::{config::JsonTrait, statics::*, types::EthDevice};
 
-use crate::statics::*;
-use crate::types::EthDevice;
-
-use core::fmt::{self, Write};
-use defmt::error;
-use defmt::info;
-use defmt::Debug2Format;
-
+use defmt::{error, info, Debug2Format};
 use embassy_net::{
     tcp::client::{TcpClient, TcpClientState},
     Stack,
 };
 use embassy_stm32::{peripherals::*, usart::Uart};
 use embassy_time::{Duration, Instant, Timer};
-use rust_mqtt::client::client_config::MqttVersion::*;
-
 use miniserde::{json, Serialize};
-use rust_mqtt::packet::v5::publish_packet::QualityOfService::{self, *};
 use rust_mqtt::{
-    client::{client::MqttClient, client_config::ClientConfig},
+    client::{
+        client::MqttClient,
+        client_config::{ClientConfig, MqttVersion::*},
+    },
+    packet::v5::publish_packet::QualityOfService::*,
     utils::rng_generator::CountingRng,
 };
 
-const BUF_SIZE: usize = 1500;
+#[cfg(feature = "home_assistant")]
+pub mod home_assistant;
 
-#[derive(Clone, Debug)]
-pub struct MqttMessage<'a> {
-    pub topic: &'a str,
-    pub payload: &'a str,
-    pub qos: QualityOfService,
-    pub retain: bool,
-}
+pub type Client<'a> =
+    MqttClient<'a, embassy_net::tcp::client::TcpConnection<'a, 1, 4096, 4096>, 5, CountingRng>;
+
+const BUF_SIZE: usize = 1500;
 
 #[embassy_executor::task]
 pub async fn mqtt_net_task(stack: &'static Stack<EthDevice>) {
     // let mut messagebus = MESSAGEBUS.subscriber().unwrap();
     loop {
         if stack.is_link_up() {
-            break;
+            if let Some(_config) = stack.config_v4() {
+                break;
+            }
         }
         Timer::after(Duration::from_millis(500)).await;
     }
 
-    info!("Waiting to get IP address...");
-    loop {
-        if let Some(_config) = stack.config_v4() {
-            break;
-        }
-        Timer::after(Duration::from_millis(1500)).await;
-    }
     info!("Spawning MQTT client");
 
     use embedded_nal_async::{SocketAddr, TcpConnect};
-    let state: TcpClientState<1, 2048, 2048> = TcpClientState::new();
+    let state: TcpClientState<1, 4096, 4096> = TcpClientState::new();
     let client = TcpClient::new(stack, &state);
 
     let mqtt_config = crate::config::MqttConfig::builder()
@@ -107,7 +94,12 @@ pub async fn mqtt_net_task(stack: &'static Stack<EthDevice>) {
         let mut recv_buffer = [0; BUF_SIZE];
         let mut write_buffer = [0; BUF_SIZE];
 
-        let mut client = MqttClient::<_, 5, _>::new(
+        let mut client: MqttClient<
+            '_,
+            embassy_net::tcp::client::TcpConnection<'_, 1, 4096, 4096>,
+            5,
+            CountingRng,
+        > = MqttClient::<_, 5, _>::new(
             tcp,
             &mut write_buffer,
             BUF_SIZE,
@@ -120,15 +112,15 @@ pub async fn mqtt_net_task(stack: &'static Stack<EthDevice>) {
             Ok(_) => info!("MQTT connected ok"),
             Err(e) => {
                 error!("MQTT Failed {}", e);
-                error!("{}", Debug2Format(&mqtt_config));
                 Timer::after(Duration::from_secs(10)).await;
                 continue;
             }
         };
 
-        'inner: loop {
-            info!("Setting up MQTT message");
+        #[cfg(feature = "home_assistant")]
+        let mut counter = 7; // first message is discovery
 
+        'inner: loop {
             if let Err(e) = client.send_ping().await {
                 error!("No response from MQTT server {}", e);
                 match client.disconnect().await {
@@ -142,33 +134,50 @@ pub async fn mqtt_net_task(stack: &'static Stack<EthDevice>) {
                 break 'inner;
             }
 
+            #[cfg(feature = "home_assistant")]
+            if counter > 6 {
+                {
+                    info!("Setting up MQTT discovery message");
+                    home_assistant::send_discovery(&mut client).await;
+                }
+                counter = 0
+            } else {
+                counter += 1
+            };
+
+            info!("Setting up MQTT message");
+
             let p = match MQTTFMT.try_lock() {
-                Ok(p) => p.device_update_msg(),
+                Ok(p) => {
+                    // p.soc = counter as f32;
+                    // p.kwh = counter as f32;
+                    // p.charge = counter as f32;
+                    // p.discharge = counter as f32;
+                    // p.amps = counter as f32;
+                    // p.cell_temp_high = counter as f32;
+                    // p.cell_temp_low = counter as f32;
+                    // p.cell_mv_high = counter as u16;
+                    // p.cell_mv_low = counter as u16;
+                    // p.bal = counter % 255;
+                    // p.valid = counter % 2 == 0;
+
+                    p.device_update_msg()
+                }
                 Err(_) => {
                     defmt::error!("Cannot get mutex lock");
                     break 'inner;
                 }
             };
 
-            let message = MqttMessage {
-                topic: mqtt_config.get_topic(),
-                payload: p.as_str(),
-                qos,
-                retain,
-            };
-
             // let mqtt_data = { *MQTTFMT.lock().await };
-            if let Err(e) = client
-                .send_message(
-                    message.topic,
-                    message.payload.as_bytes(),
-                    message.qos,
-                    message.retain,
-                )
-                .await
             {
-                error!("MQTT send {}", e);
-                break 'inner;
+                if let Err(e) = client
+                    .send_message(mqtt_config.get_topic(), p.as_bytes(), qos, retain)
+                    .await
+                {
+                    error!("MQTT send {}", e);
+                    break 'inner;
+                }
             }
             // rate limiter
             embassy_time::Timer::after(Duration::from_secs(mqtt_config.get_interval().into()))
@@ -179,7 +188,6 @@ pub async fn mqtt_net_task(stack: &'static Stack<EthDevice>) {
 }
 
 #[embassy_executor::task]
-// pub async fn uart_task(uart: Uart<'static, USART3, DMA1_CH2, DMA1_CH3>) {
 pub async fn uart_task(uart: Uart<'static, USART6, DMA2_CH7, DMA2_CH2>) {
     use embassy_futures::select::{select, Either};
     let mut uart = uart;
@@ -235,22 +243,6 @@ pub async fn uart_task(uart: Uart<'static, USART6, DMA2_CH7, DMA2_CH2>) {
                     info!("MQTT sent to UART")
                 };
             }
-        }
-    }
-}
-
-struct SliceWriter<'a>(&'a mut [u8]);
-
-impl<'a> Write for SliceWriter<'a> {
-    fn write_str(&mut self, s: &str) -> fmt::Result {
-        let bytes = s.as_bytes();
-        if self.0.len() < bytes.len() {
-            Err(fmt::Error)
-        } else {
-            let (head, tail) = core::mem::take(&mut self.0).split_at_mut(bytes.len());
-            head.copy_from_slice(bytes);
-            self.0 = tail;
-            Ok(())
         }
     }
 }

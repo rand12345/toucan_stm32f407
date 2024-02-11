@@ -49,8 +49,8 @@ mod wdt;
 static HEAP: Heap = Heap::empty();
 use {defmt_rtt as _, panic_probe as _};
 
-pub const MAC_ADDR: [u8; 6] = [0x00, 0x01, 0xDE, 0xAD, 0xBE, 0xEF]; // prod_device
-                                                                    // const MAC_ADDR: [u8; 6] = [0x00, 0x01, 0xDE, 0xAD, 0xBE, 0xEF];  // test_device
+// pub const MAC_ADDR: [u8; 6] = [0x00, 0x01, 0xDE, 0xAD, 0xBE, 0xEF]; // prod_device
+// const MAC_ADDR: [u8; 6] = [0x00, 0x01, 0xDE, 0xAD, 0xBE, 0xEF];  // test_device
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) -> () {

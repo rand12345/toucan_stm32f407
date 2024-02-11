@@ -17,6 +17,7 @@ harness = false
 [features]
 default = ["defmt"] 
 
+home_assistant = ["dep:ha-discovery"]
 display = ["dep:st7735-embassy", "dep:embedded-graphics"]
 spi = []
 syslog = ["ntp"]
@@ -82,7 +83,7 @@ httparse = { version = "1", default-features = false, optional = true }
 # rand_core = {version = "0.6.4", default-features = false}
 
 #display
-st7735-embassy = {git = "ssh://git@github.com/rand12345/st7735-embassy.git", optional = true}
+st7735-embassy = { workspace = true, optional = true}
 embedded-graphics = {version = "0.8.1", optional = true}
 
 # modbus bridge
@@ -95,13 +96,9 @@ sntpc = {path = "../sntpc", optional = true, default-features = false}
 chrono = { version = "0.4", optional = true, default-features = false}
 chrono-tz = { version = "0.8.5", optional = true, default-features = false}
 
-# ze40_bms           = { git = "ssh://git@github.com/rand12345/toucan_controller.git" }
-# tesla_m3_bms       = { git = "ssh://git@github.com/rand12345/toucan_controller.git", features = ["debug"] }
-# foxess_protocol    = { git = "ssh://git@github.com/rand12345/toucan_controller.git", features = ["defmt"] }
-# solax_protocol     = { git = "ssh://git@github.com/rand12345/toucan_controller.git", features = ["defmt"] }
-# byd_protocol       = { git = "ssh://git@github.com/rand12345/toucan_controller.git", features = ["v65"] }
-# pylontech_protocol = { git = "ssh://git@github.com/rand12345/toucan_controller.git" }
-# bms_standard       = { git = "ssh://git@github.com/rand12345/toucan_controller.git" }
+# home assistant disovery
+ha-discovery = {path = "../ha-discovery", optional = true}
+
 
 [dependencies.ze40_bms]
 git = "ssh://git@github.com/rand12345/toucan_controller.git"

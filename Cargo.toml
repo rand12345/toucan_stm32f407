@@ -5,6 +5,7 @@ members = [
     "stm32f407_controller", 
     "rust-mqtt",
     "syslog-emb",
+    "ha-discovery",
     "sntpc"
 ]
 
@@ -55,10 +56,12 @@ embassy-net           = { version = "0.4.0", git = "https://github.com/embassy-r
 embassy-futures       = { version = "^0" ,   git = "https://github.com/embassy-rs/embassy.git", rev = "6ff0e4bcf5fbcccd8ae52cc83be7ed9f83b66fde" }
 embassy-embedded-hal  = { version = "^0" ,   git = "https://github.com/embassy-rs/embassy.git", rev = "6ff0e4bcf5fbcccd8ae52cc83be7ed9f83b66fde" }
 
-defmt        = { version = "0.3" }
-no-std-net   = { version = "0.6.0" }
-heapless     = { version = "0.8.0", default-features = false }
-embedded-hal = "0.2.7"
+defmt          = { version = "0.3" }
+no-std-net     = { version = "0.6.0" }
+heapless       = { version = "0.8.0", default-features = false }
+embedded-hal   = "0.2.7"
+miniserde      = { version = "^0.1", default-features = false}
+st7735-embassy = { git = "ssh://git@github.com/rand12345/st7735-embassy.git"}
 
 [patch.crates-io]
 ze40_bms           = { git = "ssh://git@github.com/rand12345/toucan_controller.git" }
@@ -71,8 +74,8 @@ byd_protocol       = { git = "ssh://git@github.com/rand12345/toucan_controller.g
 bms_standard       = { git = "ssh://git@github.com/rand12345/toucan_controller.git" }
 
 # defmt-rtt v0.4 not working with probe-run above 064ba39690cf5beb74b95e9acb24ccc6c105a57e
-defmt       = { git = "https://github.com/knurling-rs/defmt", rev = "064ba39690cf5beb74b95e9acb24ccc6c105a57e" } 
-defmt-rtt   = { git = "https://github.com/knurling-rs/defmt", rev = "064ba39690cf5beb74b95e9acb24ccc6c105a57e" }
-defmt-test  = { git = "https://github.com/knurling-rs/defmt", rev = "064ba39690cf5beb74b95e9acb24ccc6c105a57e" }
-panic-probe = { git = "https://github.com/knurling-rs/defmt", rev = "064ba39690cf5beb74b95e9acb24ccc6c105a57e" }
-miniserde   = { git = "https://github.com/dtolnay/miniserde.git"}
+defmt          = { git = "https://github.com/knurling-rs/defmt", rev = "064ba39690cf5beb74b95e9acb24ccc6c105a57e" } 
+defmt-rtt      = { git = "https://github.com/knurling-rs/defmt", rev = "064ba39690cf5beb74b95e9acb24ccc6c105a57e" }
+defmt-test     = { git = "https://github.com/knurling-rs/defmt", rev = "064ba39690cf5beb74b95e9acb24ccc6c105a57e" }
+panic-probe    = { git = "https://github.com/knurling-rs/defmt", rev = "064ba39690cf5beb74b95e9acb24ccc6c105a57e" }
+miniserde      = { git = "https://github.com/dtolnay/miniserde.git"}

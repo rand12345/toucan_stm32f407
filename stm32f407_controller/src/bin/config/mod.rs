@@ -45,7 +45,7 @@ pub struct Config {
     pub dod: MinMax<u8>,
 }
 
-#[derive(Serialize, Deserialize, Debug)] // references only
+#[derive(Serialize, Deserialize, Debug, Default)] // references only
 pub struct NetConfig {
     pub dhcp: bool,
     pub ip: Option<String>,
