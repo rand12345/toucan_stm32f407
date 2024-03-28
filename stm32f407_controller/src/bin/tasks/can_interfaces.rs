@@ -24,7 +24,7 @@ use embassy_time::Duration;
 /// Disabled CAN Rx due to on-site bug.
 #[embassy_executor::task]
 pub async fn inverter_task(mut can: Can<'static, CAN2>, baud: u32) {
-    let _inv_rx = INVERTER_CHANNEL_RX.sender();
+    let inv_rx = INVERTER_CHANNEL_RX.sender();
     let inv_tx = INVERTER_CHANNEL_TX.receiver();
     // Wait for CAN1 to initalise
     CAN_READY.wait().await;
@@ -33,16 +33,19 @@ pub async fn inverter_task(mut can: Can<'static, CAN2>, baud: u32) {
     can.enable().await;
 
     warn!("Starting Inverter Can2");
-    let (mut tx, mut _rx) = can.split();
+    let (mut tx, mut rx) = can.split();
     loop {
         LED_COMMAND.signal(Toggle(Led2));
         let frame = inv_tx.receive().await;
+
         // CAN Rx was blocking on-site - unable to resolve
+        #[cfg(feature = "v65")]
         match tx.try_write(&frame) {
             Ok(_) => info!("Inv tx ok"),
             Err(e) => error!("Inv tx err {}", e),
         };
-        // can_routine::<CAN2, FRAME_BUFFER>(&mut rx, &mut tx, inv_rx, inv_tx).await;
+        #[cfg(not(feature = "v65"))]
+        can_routine::<CAN2, FRAME_BUFFER>(&mut rx, &mut tx, inv_rx, inv_tx).await;
     }
 }
 
