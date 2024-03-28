@@ -111,8 +111,8 @@ async fn main(spawner: Spawner) -> () {
         bms.config.set_discharge_limts(0.0, 250.0).unwrap();
         bms.config.set_charge_limts(0.0, 250.0).unwrap();
         bms.config.set_current_sensor_limts(-200.0, 200.0).unwrap();
-        // bms.set_pack_volts(55, 65).unwrap(); // might not work here
-        //                                      // summer mode
+        bms.config.set_pack_volts(55.0, 66.0).unwrap(); // might not work here
+                                                        //                                      // summer mode
         bms.set_dod(5, 90).unwrap();
 
         let mut config = crate::statics::CONFIG.lock().await;
@@ -168,6 +168,17 @@ async fn main(spawner: Spawner) -> () {
 
     defmt::unwrap!(spawner.spawn(crate::tasks::can_interfaces::bms_task(can1, 500_000)));
     defmt::unwrap!(spawner.spawn(crate::tasks::can_interfaces::inverter_task(can2, 500_000)));
+
+    #[cfg(feature = "no_net")]
+    {
+        #[cfg(feature = "ntp")]
+        let rtc = Rtc::new(p.RTC, RtcConfig::default());
+        #[cfg(feature = "ntp")]
+        unwrap!(spawner.spawn(tasks::ntp::ntp_task(stack, rtc)));
+        loop {
+            embassy_time::Timer::after_secs(10).await;
+        }
+    }
 
     // Launch network task
     unwrap!(spawner.spawn(hal::net_task(stack)));

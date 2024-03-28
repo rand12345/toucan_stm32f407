@@ -65,17 +65,32 @@ impl TryFrom<NtpResult> for Time {
 }
 
 #[cfg(feature = "ntp")]
+#[allow(unused_mut)]
 #[embassy_executor::task]
-pub async fn ntp_task(stack: StackType, mut rtc: Rtc) {
+pub async fn ntp_task(_stack: StackType, mut rtc: Rtc) {
     // use chrono::Utc;
-
     use crate::statics::UTC_NOW;
+    info!("Launching RTC");
 
-    let rtc_now = rtc.now().unwrap_or(NaiveDateTime::MIN.into());
-    let ntp_cfg_ip = env!("NTPSERVER");
-    if ntp_cfg_ip.is_empty() {
+    // #[cfg(feature = "no_net")]
+    // {
+    //     let rtc_tmp: DateTime = chrono::NaiveDateTime::from_timestamp_opt(1711529060, 0)
+    //         .unwrap()
+    //         .into();
+    //     rtc.set_datetime(rtc_tmp).expect("Set RTC to 2024 failed");
+    // }
+
+    #[cfg(not(feature = "no_net"))]
+    if env!("NTPSERVER").is_empty() {
         warn!("No NTP server configured in .env");
     } else {
+        // let rtc_now = rtc.now().unwrap_or(NaiveDateTime::MIN.into());
+        let rtc_now: DateTime = rtc.now().unwrap_or(
+            chrono::NaiveDateTime::from_timestamp_opt(1711529060, 0)
+                .unwrap()
+                .into(),
+        );
+        let ntp_cfg_ip = env!("NTPSERVER");
         info!("Spawning Network NTP client");
 
         let mut rx_buffer = [0; 512];
@@ -83,7 +98,7 @@ pub async fn ntp_task(stack: StackType, mut rtc: Rtc) {
         let mut rx_meta = [PacketMetadata::EMPTY; 16];
         let mut tx_meta = [PacketMetadata::EMPTY; 16];
         let socket = UdpSocket::new(
-            stack,
+            _stack,
             &mut rx_meta,
             &mut rx_buffer,
             &mut tx_meta,
@@ -121,13 +136,13 @@ pub async fn ntp_task(stack: StackType, mut rtc: Rtc) {
         };
 
         if let Some(ntp_time) = new_rtc_time {
-            // let mut rtc = rtc.lock().await;
             let _ = rtc.set_datetime(ntp_time.into());
             print_time(&rtc);
         }
     };
 
     let mut tick = embassy_time::Ticker::every(embassy_time::Duration::from_secs(1));
+    info!("RTC update loop");
     loop {
         // ("%Y-%m-%dT%H:%M:%S.%fZ"
         tick.next().await;
@@ -136,7 +151,7 @@ pub async fn ntp_task(stack: StackType, mut rtc: Rtc) {
         };
         // embassy_time::Timer::after(embassy_time::Duration::from_secs(60 * 60)).await;
 
-        // print_time(&rtc);
+        print_time(&rtc);
         // try update call here
     }
 }

@@ -6,7 +6,7 @@ use crate::{
     },
     types::FRAME_BUFFER,
 };
-use defmt::warn;
+use defmt::{error, info, warn};
 use embassy_futures::select::{select, Either};
 use embassy_stm32::{
     can::{
@@ -21,9 +21,10 @@ use embassy_sync::{
 };
 use embassy_time::Duration;
 
+/// Disabled CAN Rx due to on-site bug.
 #[embassy_executor::task]
 pub async fn inverter_task(mut can: Can<'static, CAN2>, baud: u32) {
-    let inv_rx = INVERTER_CHANNEL_RX.sender();
+    let _inv_rx = INVERTER_CHANNEL_RX.sender();
     let inv_tx = INVERTER_CHANNEL_TX.receiver();
     // Wait for CAN1 to initalise
     CAN_READY.wait().await;
@@ -32,10 +33,16 @@ pub async fn inverter_task(mut can: Can<'static, CAN2>, baud: u32) {
     can.enable().await;
 
     warn!("Starting Inverter Can2");
-    let (mut tx, mut rx) = can.split();
+    let (mut tx, mut _rx) = can.split();
     loop {
         LED_COMMAND.signal(Toggle(Led2));
-        can_routine::<CAN2, FRAME_BUFFER>(&mut rx, &mut tx, inv_rx, inv_tx).await;
+        let frame = inv_tx.receive().await;
+        // CAN Rx was blocking on-site - unable to resolve
+        match tx.try_write(&frame) {
+            Ok(_) => info!("Inv tx ok"),
+            Err(e) => error!("Inv tx err {}", e),
+        };
+        // can_routine::<CAN2, FRAME_BUFFER>(&mut rx, &mut tx, inv_rx, inv_tx).await;
     }
 }
 
@@ -50,6 +57,7 @@ pub async fn bms_task(mut can: Can<'static, CAN1>, baud: u32) {
     // Signal to CAN2 that filters have been applied
     CAN_READY.signal(true);
     let (mut tx, mut rx) = can.split();
+    tx.flush_any().await;
     loop {
         LED_COMMAND.signal(Toggle(Led1));
         can_routine::<CAN1, FRAME_BUFFER>(&mut rx, &mut tx, bms_rx, bms_tx).await;
@@ -77,7 +85,12 @@ async fn can_routine<C, const B: usize>(
             };
         }
         Either::Second(frame) => {
-            tx.write(&frame).await;
+            let a = tx.write(&frame).await;
+            if false {
+                defmt::error!("Tx error can {}", name);
+            };
+
+            // tx.write(&frame).await;
         }
     }
 }

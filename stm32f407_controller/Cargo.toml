@@ -15,12 +15,13 @@ name = "integration"
 harness = false
 
 [features]
-default = ["defmt","ntp", "modbus_bridge", "mqtt"] #, "ntp"] #, "mqtt", "tcp_debug"  ,] 
+default = ["defmt","ntp", "http", "v65", "precharge", "ze50", "byd", "no_net"] #, "ntp"] #, "mqtt", "tcp_debug"  ,] 
  
+no_net = []
 syslog = ["ntp"]
 mqtt = []
 ntp = ["dep:sntpc", "dep:chrono", "chrono-tz"]
-http = ["dep:httparse"]
+http = ["dep:httparse", "dep:url-lite"]
 modbus_bridge = ["dep:crc16"]
 tcp_debug = []
 precharge = []
@@ -29,7 +30,7 @@ defmt = []
 byd = ["dep:byd_protocol"]
 tesla_m3 = ["dep:tesla_m3_bms"]
 pylontech = ["dep:pylontech_protocol"]
-ze50 = ["dep:ze50_bms"]
+ze50 = ["dep:ze50_bms", "ntp"]
 ze40 = ["dep:ze40_bms"]
 foxess = ["dep:foxess_protocol"]
 solax = ["dep:solax_protocol"]
@@ -72,7 +73,7 @@ miniserde = {version = "^0", default-features = false}
 
 #http
 httparse = { version = "1", default-features = false, optional = true } 
-# rand_core = {version = "0.6.4", default-features = false}
+url-lite = { version = "0.1", optional = true }
 
 # modbus bridge
 crc16 = { version = "0.4.0", optional = true }
@@ -130,4 +131,3 @@ path = "../syslog-emb/"
 defmt-test = "0.3.0"
 bxcan = "0.7.0"
 solax_protocol = {git = "ssh://git@github.com/rand12345/toucan_controller.git", features = ["defmt"]}
-

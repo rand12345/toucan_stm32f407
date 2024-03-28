@@ -1,5 +1,4 @@
 use crate::statics::*;
-use bms_standard::Bms;
 use defmt::{error, info, warn, Debug2Format};
 use embassy_sync::blocking_mutex::raw::ThreadModeRawMutex as _Mutex;
 use embassy_sync::mutex::Mutex;
@@ -7,6 +6,8 @@ use embassy_time::Instant;
 use lazy_static::lazy_static;
 
 pub type MutexData = Mutex<_Mutex, ze50_bms::Data>;
+
+const START_TIME: i64 = 1524454107; // 23 April 2018 as epoch
 
 lazy_static! {
     pub static ref ZE50_DATA: MutexData =
@@ -24,10 +25,13 @@ async fn update() {
         }
         let mut update = || -> Result<(), bms_standard::BmsError> {
             let _soc = data.soc_value;
+            let pack_volts = data.pack_volts;
+            #[cfg(feature = "v65")]
+            let pack_volts = data.pack_volts / 6.0;
 
             // Calculate soc from cell millivolts
             #[cfg(feature = "v65")]
-            let _soc = map_cellv_soc(data.v_high_cell);
+            let _soc = map_cellv_soc((data.v_high_cell + data.v_low_cell) / 2);
 
             let max_charge_amps = *bmsdata.config.charge_current_limts().maximum();
 
@@ -48,20 +52,20 @@ async fn update() {
                 .set_valid(false)?
                 .set_soc(_soc)?
                 .set_cell_mv_low_high(data.v_low_cell, data.v_high_cell)?
-                .set_pack_volts(data.pack_volts)?
+                .set_pack_volts(pack_volts)?
                 .set_current(data.current_value)?
                 .set_temps(data.temp_min, data.temp_max)?
                 .set_kwh(data.kwh_remaining)?
                 .set_max_charge_amps(max_charge_amps)?
                 .set_pack_temp(data.pack_temp)?
-                .throttle_pack()? //Adjusts current ch/dis based on conditions
+                // .throttle_pack()? //Adjusts current ch/dis based on conditions
                 .set_valid(true)?;
-
+            defmt::debug!("Cell delta: {}mV", data.v_high_cell - data.v_low_cell);
             defmt::debug!(
                 "Data: Charge max: {}A Discharge max: {}A Shunts: {} SoC {}",
                 bmsdata.charge_max,
                 bmsdata.discharge_max,
-                bmsdata.get_balancing_cells(),
+                "todo!", // bmsdata.get_balancing_cells(),
                 _soc
             );
             #[cfg(feature = "mqtt")]
@@ -78,13 +82,14 @@ async fn update() {
 #[cfg(feature = "ze50")]
 #[embassy_executor::task]
 pub async fn bms_tx_periodic() {
-    use embassy_futures::select::{select, Either};
+    use crate::statics::UTC_NOW;
+    use embassy_futures::select::{select3 as select, Either3 as Either};
     use embassy_stm32::can::bxcan::Frame;
-    use embedded_hal::can::Frame as _;
-    use embedded_hal::can::{ExtendedId, Id, StandardId};
+    use embassy_time::{Duration, Ticker, Timer};
+    use embedded_hal::can::{ExtendedId, Frame as _, Id, StandardId};
 
-    use embassy_time::{Duration, Ticker};
-    use ze50_bms::{init_payloads, preamble_payloads};
+    const F5D: [u8; 8] = [0xC1, 0x80, 0x5D, 0x5D, 0x00, 0x00, 0xFF, 0xCB];
+    const FB2: [u8; 8] = [0xC1, 0x80, 0xB2, 0xB2, 0x00, 0x00, 0xFF, 0xCB];
 
     let tx = BMS_CHANNEL_TX.sender();
     let ticker_ms = |ms| Ticker::every(Duration::from_millis(ms));
@@ -94,33 +99,74 @@ pub async fn bms_tx_periodic() {
         };
     };
 
-    ticker_ms(2000).next().await;
-    let mut preamble_frame_number_1 = true;
-    let preamble_payloads = preamble_payloads();
     warn!("Starting BMS TX periodic");
 
     // send init
-    for payload in init_payloads() {
-        ticker_ms(200).next().await;
-        let frame = Frame::new(Id::Standard(StandardId::new(0x373).unwrap()), &payload);
-        sender(frame.unwrap());
+    /*
+    NVROL Reset: "cansend can1 18DADBF1#021003AAAAAAAAAA && sleep 0.1 && cansend can1 18DADBF1#043101B00900AAAA"
+    */
+    if false {
+        const PROGFRAME: [u8; 8] = [0x02, 0x10, 0x03, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA];
+        let prog_frame = Frame::new(
+            Id::Extended(ExtendedId::new(0x18DADBF1).unwrap()),
+            &PROGFRAME,
+        )
+        .unwrap();
+        sender(prog_frame);
+        Timer::after_micros(1).await;
+        let frame = Frame::new(
+            Id::Extended(ExtendedId::new(0x18DADBF1).unwrap()),
+            &[0x04, 0x31, 0x01, 0xB0, 0x09, 0x00, 0xAA, 0xAA],
+        )
+        .unwrap();
+        sender(frame);
+        Timer::after_micros(500).await;
+
+        /*
+        Enable temporisation before sleep: "cansend can1 18DADBF1#021003AAAAAAAAAA && sleep 0.1 && cansend can1 18DADBF1#042E928101AAAAAA"
+        */
+
+        let prog_frame = Frame::new(
+            Id::Extended(ExtendedId::new(0x18DADBF1).unwrap()),
+            &PROGFRAME,
+        )
+        .unwrap();
+        sender(prog_frame);
+        Timer::after_micros(1).await;
+        let frame = Frame::new(
+            Id::Extended(ExtendedId::new(0x18DADBF1).unwrap()),
+            &[0x04, 0x2E, 0x92, 0x81, 0x01, 0xAA, 0xAA, 0xAA],
+        )
+        .unwrap();
+        sender(frame);
+        Timer::after_micros(500).await;
     }
 
-    let mut t1 = ticker_ms(200);
-    let mut t2 = ticker_ms(225);
+    let mut counter = 0u8;
+    let mut t200ms = ticker_ms(210);
+    let mut t100ms = ticker_ms(100);
+
+    // hold and wait for RTC to be live. Accurate time standard is essential.
+    info!("Waiting for RTC");
+    let mut time_payload = convert_rtc_to_payload(UTC_NOW.wait().await);
+    info!("Started ZE50 Tx loop");
     loop {
-        let frame: Frame = match select(t1.next(), t2.next()).await {
+        match select(t100ms.next(), t200ms.next(), UTC_NOW.wait()).await {
             Either::First(_) => {
-                let payload = {
-                    if preamble_frame_number_1 {
-                        preamble_frame_number_1 = false;
-                        preamble_payloads[0]
-                    } else {
-                        preamble_frame_number_1 = true;
-                        preamble_payloads[1]
-                    }
-                };
-                Frame::new(Id::Standard(StandardId::new(0x373).unwrap()), &payload).unwrap()
+                // iteration 0..3 5d, 4..8 b2
+                counter = (counter + 1) % 9;
+                let payload = if counter >= 4 { &F5D } else { &FB2 };
+
+                // move this entirely to ZE50 crate
+                let frame =
+                    Frame::new(Id::Standard(StandardId::new(0x373).unwrap()), payload).unwrap();
+                sender(frame);
+
+                // move this ID to ZE50 crate
+                let timeframe =
+                    Frame::new(Id::Standard(StandardId::new(0x376).unwrap()), &time_payload)
+                        .unwrap();
+                sender(timeframe);
             }
             Either::Second(_) => {
                 // read the current ZE50_DATA mode
@@ -139,14 +185,17 @@ pub async fn bms_tx_periodic() {
                     // majority of readings
                     0x90
                 };
-                Frame::new(
+                let frame = Frame::new(
                     Id::Extended(ExtendedId::new(0x18DADBF1).unwrap()),
                     &[0x03, 0x22, pid_id, pid, 0xff, 0xff, 0xff, 0xff],
                 )
-                .unwrap()
+                .unwrap();
+                sender(frame);
             }
+            Either::Third(t) => {
+                time_payload = convert_rtc_to_payload(t);
+            } // update time on tick (1Hz)
         };
-        sender(frame);
     }
 }
 
@@ -172,6 +221,7 @@ pub async fn bms_rx() {
             // process_payload into Data struct
             if let Err(e) = data.process_payload(frame.data().unwrap()) {
                 defmt::error!("ZE50 process_payload {:?}", Debug2Format(&e));
+                *LAST_BMS_MESSAGE.lock().await = Some(Instant::now()); // testing
             } else {
                 *LAST_BMS_MESSAGE.lock().await = Some(Instant::now());
                 // info!("BMS last message time reset")
@@ -184,8 +234,7 @@ pub async fn bms_rx() {
 
 #[cfg(feature = "mqtt")]
 #[inline]
-fn push_all_to_mqtt(bms: Bms) {
-    // let bms = BMS.lock().await;
+fn push_all_to_mqtt(bms: bms_standard::Bms) {
     if let Ok(mut lock) = MQTTFMT.try_lock() {
         *lock = bms.into()
     };
@@ -202,4 +251,29 @@ fn map_cellv_soc(value: impl Into<f32>) -> f32 {
     let new_range = 100.0 - 0.1;
     let value: f32 = value.into();
     (((value - CELL0) * new_range) / old_range) + 0.1
+}
+
+/// Calc 24 bit timer - minute resolution
+#[inline]
+fn convert_rtc_to_payload(t: embassy_stm32::rtc::DateTime) -> [u8; 8] {
+    // move this fn to ZE50 crate
+
+    let time = chrono::NaiveDateTime::from(t);
+    let duration_since_production = time.timestamp() - START_TIME;
+    let minutes = (duration_since_production / 60) as u32; // 24 bits
+
+    let year_seg = (minutes >> 16) as u8;
+    let hour_seg = ((minutes) >> 8) as u8;
+    let minutes_seg = minutes as u8;
+
+    [
+        year_seg,
+        hour_seg,
+        minutes_seg,
+        year_seg,
+        hour_seg,
+        minutes_seg,
+        0x4A,
+        0x54,
+    ]
 }
